@@ -1,0 +1,1988 @@
+<!doctype html>
+<html lang="es-AR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, viewport-fit=cover">
+<title>Mis Finanzas</title>
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="Finanzas">
+<meta name="theme-color" content="#EEF3F0" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#0B120E" media="(prefers-color-scheme: dark)">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<link rel="icon" type="image/png" href="icon-192.png">
+<link rel="manifest" href="manifest.webmanifest">
+
+
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700&family=Figtree:wght@400;500;600;700&display=swap">
+<style>
+/* Layout: una sola columna para celular (máx. 28rem), barra inferior fija de 5 secciones y botón flotante para cargar movimientos */
+:root{
+  --bg:#EEF3F0; --surface:#FFFFFF; --surface-2:#F5F8F6; --ink:#13201A; --muted:#5D6D65; --line:#DCE5E0;
+  --brand:#0E6B4F; --brand-ink:#FFFFFF; --brand-soft:#DDF0E7;
+  --inc:#1C9358; --inc-soft:#DDF3E6; --exp:#D9532E; --exp-soft:#FBE6DE; --debt:#C9781E; --debt-soft:#FBEBD6;
+  --cou:#2C6CB0; --cou-soft:#DFEBF7; --emp:#6A4FC4; --emp-soft:#ECE7FA;
+  --font-display:"Bricolage Grotesque", "Figtree", system-ui, sans-serif;
+  --font-body:"Figtree", system-ui, -apple-system, "Segoe UI", sans-serif;
+}
+@media (prefers-color-scheme: dark){ :root:not([data-theme="light"]){
+  --bg:#0B120E; --surface:#141E19; --surface-2:#1A2620; --ink:#E5EEE9; --muted:#93A39B; --line:#26342D;
+  --brand:#2FB582; --brand-ink:#06130D; --brand-soft:#173327;
+  --inc:#45C98A; --inc-soft:#163126; --exp:#F27A57; --exp-soft:#3A1F17; --debt:#E9A04D; --debt-soft:#36270F;
+  --cou:#6EA8E6; --cou-soft:#16263A; --emp:#A891F0; --emp-soft:#251E3D;
+  color-scheme:dark; } }
+:root[data-theme="dark"]{
+  --bg:#0B120E; --surface:#141E19; --surface-2:#1A2620; --ink:#E5EEE9; --muted:#93A39B; --line:#26342D;
+  --brand:#2FB582; --brand-ink:#06130D; --brand-soft:#173327;
+  --inc:#45C98A; --inc-soft:#163126; --exp:#F27A57; --exp-soft:#3A1F17; --debt:#E9A04D; --debt-soft:#36270F;
+  --cou:#6EA8E6; --cou-soft:#16263A; --emp:#A891F0; --emp-soft:#251E3D;
+  color-scheme:dark; }
+html,body{background:var(--bg);color:var(--ink)}
+body{font-family:var(--font-body);font-size:15px;-webkit-tap-highlight-color:transparent}
+.num{font-variant-numeric:tabular-nums}
+.display{font-family:var(--font-display);letter-spacing:-0.01em}
+.label{font-size:11px;letter-spacing:.08em;text-transform:uppercase;font-weight:600;color:var(--muted)}
+h1,h2,h3{text-wrap:balance}
+input,select,textarea{font:inherit;color:var(--ink)}
+.field{width:100%;background:var(--surface-2);border:1px solid var(--line);border-radius:14px;padding:12px 14px;outline:none}
+.field:focus{border-color:var(--brand);box-shadow:0 0 0 3px var(--brand-soft)}
+button:focus-visible,.field:focus-visible{outline:2px solid var(--brand);outline-offset:2px}
+.sheet-in{animation:up .22s ease-out}
+@keyframes up{from{transform:translateY(24px);opacity:.6}to{transform:none;opacity:1}}
+@media (prefers-reduced-motion: reduce){.sheet-in{animation:none}*{transition:none!important}}
+.recharts-tooltip-wrapper{outline:none}
+#loading{padding:40px 16px;text-align:center;color:var(--muted)}
+</style>
+<style>
+html,body{margin:0;min-height:100%}
+:root{padding-top:env(safe-area-inset-top,0px)}
+[hidden]{display:none!important}
+img{max-width:100%}
+</style>
+</head>
+<body>
+
+<div id="root"><div id="loading">Cargando tus finanzas…</div></div>
+
+<script src="https://cdn.tailwindcss.com/3.4.17"></script>
+<script>
+tailwind.config={theme:{extend:{colors:{
+  bg:'var(--bg)',surface:'var(--surface)',surface2:'var(--surface-2)',ink:'var(--ink)',muted:'var(--muted)',line:'var(--line)',
+  brand:'var(--brand)',brandink:'var(--brand-ink)',brandsoft:'var(--brand-soft)',
+  inc:'var(--inc)',incsoft:'var(--inc-soft)',exp:'var(--exp)',expsoft:'var(--exp-soft)',debt:'var(--debt)',debtsoft:'var(--debt-soft)',
+  cou:'var(--cou)',cousoft:'var(--cou-soft)',emp:'var(--emp)',empsoft:'var(--emp-soft)'}}}};
+</script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.3.1/umd/react.production.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.3.1/umd/react-dom.production.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/prop-types/15.8.1/prop-types.min.js"></script>
+<script src="https://unpkg.com/recharts@2.12.7/umd/Recharts.js"></script>
+<script>window.react = window.React;</script>
+<script src="https://unpkg.com/lucide-react@0.383.0/dist/umd/lucide-react.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/7.24.7/babel.min.js"></script>
+
+<script type="text/babel" data-presets="react">
+const { useState, useMemo, useEffect, useRef } = React;
+const { PieChart, Pie, Cell, ResponsiveContainer, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip } = window.Recharts || {};
+
+/* ---------- utilidades ---------- */
+const FALLBACK = { Plus: "+", Trash2: "✕", X: "✕", Check: "✓", ChevronLeft: "‹", ChevronRight: "›", Pencil: "✎" };
+const Ic = ({ n, size = 18, className = "", ...p }) => {
+  const C = (window.LucideReact || {})[n];
+  if (C) return <C size={size} strokeWidth={2} className={className} aria-hidden="true" {...p} />;
+  return <span aria-hidden="true" className={className} style={{ width: size, height: size, display: "inline-grid", placeItems: "center", fontSize: size * 0.9, lineHeight: 1, fontWeight: 700 }}>{FALLBACK[n] || ""}</span>;
+};
+const uid = () => Math.random().toString(36).slice(2, 10);
+const fmtARS = new Intl.NumberFormat("es-AR", { style: "currency", currency: "ARS", minimumFractionDigits: 0, maximumFractionDigits: 2 });
+const money = (n) => fmtARS.format(Math.round((n || 0) * 100) / 100);
+const fmtPlano = new Intl.NumberFormat("es-AR", { maximumFractionDigits: 2 });
+const fmtCompact = new Intl.NumberFormat("es-AR", { notation: "compact", maximumFractionDigits: 1 });
+const pad = (n) => String(n).padStart(2, "0");
+const toISO = (d) => `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
+const fmtDate = (iso) => { const [y, m, d] = iso.split("-"); return `${d}/${m}/${y}`; };
+const MESES = ["ene", "feb", "mar", "abr", "may", "jun", "jul", "ago", "sep", "oct", "nov", "dic"];
+const MESES_L = ["enero", "febrero", "marzo", "abril", "mayo", "junio", "julio", "agosto", "septiembre", "octubre", "noviembre", "diciembre"];
+const DIAS = ["domingo", "lunes", "martes", "miércoles", "jueves", "viernes", "sábado"];
+const monthKey = (d) => `${d.getFullYear()}-${pad(d.getMonth() + 1)}`;
+const parseMonto = (s) => {
+  let t = String(s ?? "").trim().replace(/\$/g, "").replace(/\s/g, "");
+  if (!t) return NaN;
+  if (t.includes(",")) t = t.replace(/\./g, "").replace(",", ".");
+  else if (/^\d{1,3}(\.\d{3})+$/.test(t)) t = t.replace(/\./g, "");
+  return Number(t);
+};
+const sum = (arr, f = (x) => x.monto) => arr.reduce((a, x) => a + (f(x) || 0), 0);
+
+/* ---------- catálogos ---------- */
+/* Valores iniciales. Las categorías y los medios de pago se editan desde Ajustes y viven en los datos. */
+const CAT_EGRESO_BASE = [
+  { id: "Hogar", icon: "Home", color: "#3B7DD8" },
+  { id: "Vicente", icon: "Baby", color: "#D9577E" },
+  { id: "Supermercado", icon: "ShoppingCart", color: "#2A9D8F" },
+  { id: "Educación", icon: "GraduationCap", color: "#5BA35B" },
+  { id: "Seguros", icon: "ShieldCheck", color: "#7A8CA8" },
+  { id: "Transporte", icon: "Car", color: "#8A6FD6" },
+  { id: "Salud", icon: "HeartPulse", color: "#E07A3F" },
+  { id: "Ropa", icon: "Shirt", color: "#C46BB8" },
+  { id: "Compras", icon: "ShoppingBag", color: "#3FA3C9" },
+  { id: "Ocio", icon: "Gamepad2", color: "#D9A520" },
+  { id: "Otros gastos", icon: "Package", color: "#8E9A94" },
+];
+const CAT_INGRESO_BASE = [
+  { id: "Sueldo", icon: "Briefcase", color: "#1C9358" },
+  { id: "Ventas y extras", icon: "TrendingUp", color: "#2FB582" },
+  { id: "Otros ingresos", icon: "PlusCircle", color: "#6FBF8F" },
+];
+const PAGOS_BASE = [
+  { id: "Transferencia", icon: "Landmark" },
+  { id: "Efectivo", icon: "Banknote" },
+  { id: "Tarjeta de Crédito", icon: "CreditCard" },
+  { id: "Tarjeta de Débito", icon: "CreditCard" },
+  { id: "ARQ", icon: "Smartphone" },
+  { id: "Mercado Pago", icon: "Wallet" },
+];
+const CREDITO = "Tarjeta de Crédito"; /* fijo: activa la elección de tarjeta y cuotas */
+const categoriasBase = () => [
+  ...CAT_EGRESO_BASE.map((c, i) => ({ ...c, key: "ce" + i, tipo: "egreso" })),
+  ...CAT_INGRESO_BASE.map((c, i) => ({ ...c, key: "ci" + i, tipo: "ingreso" })),
+];
+const mediosBase = () => PAGOS_BASE.map((p, i) => ({ ...p, key: "mp" + i }));
+const ICONOS_CAT = ["Home", "Baby", "ShoppingCart", "GraduationCap", "ShieldCheck", "Car", "HeartPulse", "Shirt", "ShoppingBag", "Gamepad2", "Gift", "PawPrint", "Plane", "Dumbbell", "Coffee", "UtensilsCrossed", "Wrench", "Zap", "Music", "Sparkles", "Briefcase", "TrendingUp", "PlusCircle", "Package"];
+const ICONOS_MEDIO = ["Banknote", "CreditCard", "Landmark", "Smartphone", "Wallet", "QrCode", "Coins", "ArrowLeftRight", "Building2", "Globe"];
+const COLORES_CAT = ["#3B7DD8", "#D9577E", "#2A9D8F", "#5BA35B", "#7A8CA8", "#8A6FD6", "#E07A3F", "#C46BB8", "#3FA3C9", "#D9A520", "#C0504D", "#8E9A94"];
+
+/* Catálogos vigentes: App los actualiza en cada render a partir de los datos */
+let CAT_EGRESO = CAT_EGRESO_BASE, CAT_INGRESO = CAT_INGRESO_BASE, CATS = {}, PAGOS = PAGOS_BASE;
+function aplicarCatalogos(d) {
+  const cats = d.categorias && d.categorias.length ? d.categorias : categoriasBase();
+  CAT_EGRESO = cats.filter((c) => c.tipo === "egreso");
+  CAT_INGRESO = cats.filter((c) => c.tipo === "ingreso");
+  CATS = Object.fromEntries(cats.map((c) => [c.id, c]));
+  const meds = d.medios && d.medios.length ? d.medios : mediosBase();
+  PAGOS = meds.some((m) => m.id === CREDITO) ? meds : [...meds, { id: CREDITO, icon: "CreditCard", key: "mp-credito" }];
+  TARJETAS = d.tarjetas && d.tarjetas.length ? d.tarjetas : tarjetasBase();
+}
+const TARJETAS_BASE = [
+  { id: "Banco Provincia", color: "#2A8C5A" },
+  { id: "Santander Río", color: "#D3423A" },
+  { id: "Macro", color: "#1F4E9C" },
+];
+const tarjetasBase = () => TARJETAS_BASE.map((t, i) => ({ ...t, key: "tc" + i, icon: "CreditCard" }));
+const COLORES_TARJETA = ["#2A8C5A", "#D3423A", "#1F4E9C", "#E07A3F", "#7A3FA0", "#D9A520", "#2A9D8F", "#C46BB8", "#5B6B73", "#3B7DD8"];
+let TARJETAS = TARJETAS_BASE;
+const CAT_EMPRESA = [
+  { id: "Combustible", icon: "Fuel" },
+  { id: "Comidas", icon: "UtensilsCrossed" },
+  { id: "Viajes y peajes", icon: "Car" },
+  { id: "Alojamiento", icon: "BedDouble" },
+  { id: "Materiales", icon: "Wrench" },
+  { id: "Celular e internet", icon: "Smartphone" },
+  { id: "Otros", icon: "Package" },
+];
+const EMP_ICON = Object.fromEntries(CAT_EMPRESA.map((c) => [c.id, c.icon]));
+
+/* Plantilla de gastos fijos tomada de la planilla de agosto (montos de referencia, se editan al cargar) */
+const FIJOS_BASE = [
+  { id: "f-expensas", desc: "Expensas Rumenco", cat: "Hogar", pago: "Transferencia", monto: 700000 },
+  { id: "f-jardinero", desc: "Jardinero Cristian", cat: "Hogar", pago: "Transferencia", monto: 80000 },
+  { id: "f-limpieza", desc: "Limpieza Mabel", cat: "Hogar", pago: "Efectivo", monto: 500000 },
+  { id: "f-ninera", desc: "Niñera Juli", cat: "Vicente", pago: "Transferencia", monto: 400000 },
+  { id: "f-edea", desc: "EDEA (luz)", cat: "Hogar", pago: "Tarjeta de Crédito", tarjeta: "Banco Provincia", monto: 77525.87 },
+  { id: "f-camuzzi", desc: "Camuzzi (gas)", cat: "Hogar", pago: "Tarjeta de Crédito", tarjeta: "Banco Provincia", monto: 134414.31 },
+  { id: "f-sancor", desc: "Prevención Sancor", cat: "Seguros", pago: "Tarjeta de Crédito", tarjeta: "Santander Río", monto: 77763.97 },
+];
+
+const KEY = "mis-finanzas-v2";
+const vacio = () => ({ movs: [], deudas: [], metas: [], cousteau: [], empresa: [], fijos: FIJOS_BASE, categorias: categoriasBase(), medios: mediosBase(), tarjetas: tarjetasBase() });
+function cargar() {
+  try {
+    localStorage.removeItem("mis-finanzas-v1");
+    const raw = localStorage.getItem(KEY);
+    if (raw) return { ...vacio(), ...JSON.parse(raw) };
+  } catch (e) {}
+  return vacio();
+}
+
+/* ---------- sincronización con Google Sheets (vía Apps Script) ---------- */
+const CFG_KEY = "mis-finanzas-sheets";
+const PEND_KEY = "mis-finanzas-pendiente";
+const EN_ARTIFACT = (() => { try { return window.self !== window.top; } catch (e) { return true; } })();
+const leerCfg = () => { try { return JSON.parse(localStorage.getItem(CFG_KEY)) || null; } catch (e) { return null; } };
+const guardarCfg = (c) => { try { c ? localStorage.setItem(CFG_KEY, JSON.stringify(c)) : localStorage.removeItem(CFG_KEY); } catch (e) {} };
+const marcarPendiente = (v) => { try { v ? localStorage.setItem(PEND_KEY, "1") : localStorage.removeItem(PEND_KEY); } catch (e) {} };
+const hayPendiente = () => { try { return localStorage.getItem(PEND_KEY) === "1"; } catch (e) { return false; } };
+const aBool = (v) => v === true || v === "TRUE" || v === "true" || v === 1;
+const aNum = (v) => { const n = typeof v === "number" ? v : parseFloat(String(v ?? "").replace(",", ".")); return isNaN(n) ? 0 : n; };
+const aTxt = (v) => (v == null ? "" : String(v));
+
+const ENCABEZADOS = {
+  Movimientos: ["id", "fecha", "tipo", "monto", "detalle", "categoria", "medio", "tarjeta", "cuota", "cuotas_total", "fijo", "fijo_ref"],
+  Deudas: ["id", "fecha", "tipo", "persona", "detalle", "total", "pagado"],
+  Ahorros: ["id", "nombre", "objetivo", "actual", "limite"],
+  Cousteau: ["id", "fecha", "tipo", "monto", "detalle", "medio"],
+  Empresa: ["id", "fecha", "monto", "detalle", "categoria"],
+  Fijos: ["id", "detalle", "categoria", "medio", "tarjeta", "monto"],
+  Medios: ["id", "nombre", "icono"],
+  Categorias: ["id", "nombre", "tipo", "icono", "color"],
+  Tarjetas: ["id", "nombre", "color"],
+};
+const aSheets = (d) => ({
+  Movimientos: d.movs.map((m) => ({ id: m.id, fecha: m.fecha, tipo: m.tipo, monto: m.monto, detalle: m.desc, categoria: m.cat, medio: m.pago, tarjeta: m.tarjeta || "",
+    cuota: m.cuota ? m.cuota.n : "", cuotas_total: m.cuota ? m.cuota.de : "", fijo: !!m.fijo, fijo_ref: m.fijoRef || "" })),
+  Deudas: d.deudas.map((x) => ({ id: x.id, fecha: x.fecha, tipo: x.tipo, persona: x.persona, detalle: x.detalle || "", total: x.total, pagado: x.pagado })),
+  Ahorros: d.metas.map((x) => ({ id: x.id, nombre: x.nombre, objetivo: x.objetivo, actual: x.actual, limite: x.limite || "" })),
+  Cousteau: d.cousteau.map((x) => ({ id: x.id, fecha: x.fecha, tipo: x.tipo, monto: x.monto, detalle: x.detalle || "", medio: x.medio || "" })),
+  Empresa: d.empresa.map((x) => ({ id: x.id, fecha: x.fecha, monto: x.monto, detalle: x.detalle, categoria: x.cat })),
+  Fijos: d.fijos.map((x) => ({ id: x.id, detalle: x.desc, categoria: x.cat, medio: x.pago, tarjeta: x.tarjeta || "", monto: x.monto })),
+  Medios: (d.medios || []).map((x) => ({ id: x.key, nombre: x.id, icono: x.icon })),
+  Categorias: (d.categorias || []).map((x) => ({ id: x.key, nombre: x.id, tipo: x.tipo, icono: x.icon, color: x.color })),
+  Tarjetas: (d.tarjetas || []).map((x) => ({ id: x.key, nombre: x.id, color: x.color })),
+});
+const deSheets = (s) => {
+  const g = (k) => (Array.isArray(s[k]) ? s[k] : []).filter((r) => r && r.id !== "" && r.id != null);
+  return {
+    movs: g("Movimientos").map((r) => {
+      const de = aNum(r.cuotas_total);
+      return { id: aTxt(r.id), fecha: aTxt(r.fecha), tipo: aTxt(r.tipo), monto: aNum(r.monto), desc: aTxt(r.detalle), cat: aTxt(r.categoria), pago: aTxt(r.medio),
+        tarjeta: aTxt(r.tarjeta) || null, cuota: de > 1 ? { n: aNum(r.cuota), de } : null, fijo: aBool(r.fijo), fijoRef: aTxt(r.fijo_ref) || undefined };
+    }),
+    deudas: g("Deudas").map((r) => ({ id: aTxt(r.id), fecha: aTxt(r.fecha), tipo: aTxt(r.tipo), persona: aTxt(r.persona), detalle: aTxt(r.detalle), total: aNum(r.total), pagado: aNum(r.pagado) })),
+    metas: g("Ahorros").map((r) => ({ id: aTxt(r.id), nombre: aTxt(r.nombre), objetivo: aNum(r.objetivo), actual: aNum(r.actual), limite: aTxt(r.limite) })),
+    cousteau: g("Cousteau").map((r) => ({ id: aTxt(r.id), fecha: aTxt(r.fecha), tipo: aTxt(r.tipo), monto: aNum(r.monto), detalle: aTxt(r.detalle), medio: aTxt(r.medio) })),
+    empresa: g("Empresa").map((r) => ({ id: aTxt(r.id), fecha: aTxt(r.fecha), monto: aNum(r.monto), detalle: aTxt(r.detalle), cat: aTxt(r.categoria) })),
+    fijos: g("Fijos").map((r) => ({ id: aTxt(r.id), desc: aTxt(r.detalle), cat: aTxt(r.categoria), pago: aTxt(r.medio), tarjeta: aTxt(r.tarjeta) || null, monto: aNum(r.monto) })),
+    medios: g("Medios").map((r) => ({ key: aTxt(r.id), id: aTxt(r.nombre), icon: aTxt(r.icono) || "Wallet" })),
+    categorias: g("Categorias").map((r) => ({ key: aTxt(r.id), id: aTxt(r.nombre), tipo: aTxt(r.tipo) === "ingreso" ? "ingreso" : "egreso", icon: aTxt(r.icono) || "Package", color: aTxt(r.color) || "#8E9A94" })),
+    tarjetas: g("Tarjetas").map((r) => ({ key: aTxt(r.id), id: aTxt(r.nombre), color: aTxt(r.color) || "#5B6B73", icon: "CreditCard" })),
+  };
+};
+async function llamarSheets(c, cuerpo) {
+  let r;
+  if (cuerpo) {
+    r = await fetch(c.url, { method: "POST", headers: { "Content-Type": "text/plain;charset=utf-8" }, body: JSON.stringify({ clave: c.clave, ...cuerpo }) });
+  } else {
+    r = await fetch(c.url + (c.url.includes("?") ? "&" : "?") + "clave=" + encodeURIComponent(c.clave) + "&t=" + Date.now());
+  }
+  let j;
+  try { j = await r.json(); } catch (e) { throw new Error("La URL no responde como esperaba. Revisá que sea la de la implementación (termina en /exec)."); }
+  if (!j.ok) throw new Error(j.error || "Error desconocido");
+  return j;
+}
+const mensajeError = (e) => /fetch|network|load failed/i.test(String(e && e.message)) ? "No se pudo conectar. Revisá internet o la URL." : String((e && e.message) || e);
+
+function FormSheets({ cfg, onConectar, onDesconectar }) {
+  const [url, setUrl] = useState(cfg ? cfg.url : "");
+  const [clave, setClave] = useState(cfg ? cfg.clave : "");
+  const [estado, setEstado] = useState("");
+  const [err, setErr] = useState("");
+  const [confirmar, setConfirmar] = useState(false);
+  const conectar = async () => {
+    const c = { url: url.trim(), clave: clave.trim() };
+    if (!/^https:\/\/script\.google\.com\/.+\/exec$/.test(c.url)) return setErr("Pegá la URL de la aplicación web. Empieza con https://script.google.com/ y termina en /exec");
+    if (!c.clave) return setErr("Escribí la clave que pusiste en el código de Apps Script");
+    setErr(""); setEstado("Probando conexión…");
+    try { await llamarSheets(c); setEstado(""); onConectar(c); }
+    catch (e) { setEstado(""); setErr(mensajeError(e)); }
+  };
+  return (
+    <div className="flex flex-col gap-4">
+      <p className="text-sm text-muted">Con esto tus datos se guardan en tu planilla de Google y los podés ver desde cualquier dispositivo.</p>
+      <Campo label="URL de Apps Script" htmlFor="cfg-url">
+        <textarea id="cfg-url" rows="3" className="field text-sm break-all" placeholder="https://script.google.com/macros/s/…/exec" value={url} onChange={(e) => { setUrl(e.target.value); setErr(""); }} />
+      </Campo>
+      <Campo label="Clave" htmlFor="cfg-clave">
+        <input id="cfg-clave" className="field" autoCapitalize="off" autoCorrect="off" value={clave} onChange={(e) => { setClave(e.target.value); setErr(""); }} />
+      </Campo>
+      {estado && <p className="text-sm text-muted">{estado}</p>}
+      {err && <p className="text-sm text-exp font-medium" role="alert">{err}</p>}
+      <button type="button" onClick={conectar} className="h-14 rounded-2xl font-bold bg-brand text-brandink flex items-center justify-center gap-2"><Ic n="Cloud" />{cfg ? "Guardar y reconectar" : "Conectar"}</button>
+      {cfg && (confirmar ? (
+        <div className="flex gap-2">
+          <button type="button" onClick={onDesconectar} className="flex-1 h-11 rounded-xl bg-expsoft text-exp font-semibold">Sí, desconectar</button>
+          <button type="button" onClick={() => setConfirmar(false)} className="px-4 h-11 rounded-xl bg-surface2 border border-line font-semibold">Cancelar</button>
+        </div>
+      ) : (
+        <button type="button" onClick={() => setConfirmar(true)} className="h-11 rounded-xl bg-surface2 border border-line font-semibold text-sm">Desconectar de Sheets</button>
+      ))}
+    </div>
+  );
+}
+
+/* ---------- colores de gráfico según tema ---------- */
+function useTokens() {
+  const leer = () => {
+    const cs = getComputedStyle(document.documentElement);
+    const g = (k) => cs.getPropertyValue(k).trim();
+    return { ink: g("--ink"), muted: g("--muted"), line: g("--line"), inc: g("--inc"), exp: g("--exp"), surface: g("--surface") };
+  };
+  const [t, setT] = useState(leer);
+  useEffect(() => {
+    const f = () => setT(leer());
+    const mq = window.matchMedia("(prefers-color-scheme: dark)");
+    mq.addEventListener ? mq.addEventListener("change", f) : mq.addListener(f);
+    const mo = new MutationObserver(f);
+    mo.observe(document.documentElement, { attributes: true, attributeFilter: ["data-theme"] });
+    return () => { mq.removeEventListener ? mq.removeEventListener("change", f) : mq.removeListener(f); mo.disconnect(); };
+  }, []);
+  return t;
+}
+
+/* ---------- piezas comunes ---------- */
+function Sheet({ title, onClose, children }) {
+  useEffect(() => {
+    const k = (e) => e.key === "Escape" && onClose();
+    window.addEventListener("keydown", k);
+    return () => window.removeEventListener("keydown", k);
+  }, []);
+  return (
+    <div className="fixed inset-0 z-50 flex items-end justify-center" role="dialog" aria-modal="true" aria-label={title}>
+      <div className="absolute inset-0 bg-black/40" onClick={onClose} />
+      <div className="sheet-in relative w-full max-w-md bg-surface rounded-t-3xl max-h-[92%] overflow-y-auto"
+        style={{ paddingBottom: "calc(20px + env(safe-area-inset-bottom, 0px))" }}>
+        <div className="sticky top-0 bg-surface z-10 px-5 pt-3 pb-3 border-b border-line">
+          <div className="mx-auto mb-3 h-1 w-10 rounded-full bg-line" />
+          <div className="flex items-center justify-between">
+            <h2 className="display text-xl font-bold">{title}</h2>
+            <button onClick={onClose} className="h-9 w-9 grid place-items-center rounded-full bg-surface2 text-muted" aria-label="Cerrar"><Ic n="X" /></button>
+          </div>
+        </div>
+        <div className="px-5 pt-4">{children}</div>
+      </div>
+    </div>
+  );
+}
+
+function Segmento({ value, onChange, options }) {
+  return (
+    <div className="grid gap-1 p-1 rounded-2xl bg-surface2 border border-line" style={{ gridTemplateColumns: `repeat(${options.length},1fr)` }}>
+      {options.map((o) => {
+        const on = value === o.value;
+        return (
+          <button key={o.value} type="button" onClick={() => onChange(o.value)}
+            className={`py-2.5 rounded-xl text-sm font-semibold flex items-center justify-center gap-1.5 transition ${on ? o.activeCls : "text-muted"}`}>
+            {o.icon && <Ic n={o.icon} size={16} />}{o.label}
+          </button>
+        );
+      })}
+    </div>
+  );
+}
+
+const Campo = ({ label, htmlFor, children, hint }) => (
+  <div className="flex flex-col gap-1.5">
+    <label htmlFor={htmlFor} className="label">{label}</label>
+    {children}
+    {hint && <p className="text-xs text-muted">{hint}</p>}
+  </div>
+);
+
+function Barra({ pct, color = "var(--inc)" }) {
+  return (
+    <div className="h-2.5 w-full rounded-full bg-surface2 border border-line overflow-hidden" role="progressbar" aria-valuenow={Math.round(pct)} aria-valuemin="0" aria-valuemax="100">
+      <div className="h-full rounded-full transition-all duration-500" style={{ width: `${Math.min(100, Math.max(0, pct))}%`, background: color }} />
+    </div>
+  );
+}
+
+function BorrarBtn({ onConfirm }) {
+  const [c, setC] = useState(false);
+  useEffect(() => { if (c) { const t = setTimeout(() => setC(false), 3000); return () => clearTimeout(t); } }, [c]);
+  return c ? (
+    <button onClick={onConfirm} className="px-3 h-9 rounded-full bg-expsoft text-exp text-sm font-semibold shrink-0">¿Borrar?</button>
+  ) : (
+    <button onClick={() => setC(true)} className="h-9 w-9 grid place-items-center rounded-full text-muted hover:bg-surface2 shrink-0" aria-label="Borrar"><Ic n="Trash2" size={17} /></button>
+  );
+}
+
+function CatIcon({ cat, size = 40 }) {
+  const c = CATS[cat] || { icon: "Circle", color: "#8E9A94" };
+  return (
+    <span className="grid place-items-center rounded-2xl shrink-0" style={{ width: size, height: size, background: c.color + "22", color: c.color }}>
+      <Ic n={c.icon} size={size * 0.48} />
+    </span>
+  );
+}
+
+const Vacio = ({ icon, children }) => (
+  <div className="rounded-3xl bg-surface border border-line p-7 text-center text-muted">
+    <Ic n={icon} size={28} className="mx-auto mb-2" />
+    <div className="text-sm">{children}</div>
+  </div>
+);
+
+function FilaMov({ m, onDelete, onEdit }) {
+  const ing = m.tipo === "ingreso";
+  const medio = m.pago === "Tarjeta de Crédito" && m.tarjeta ? m.tarjeta : m.pago;
+  return (
+    <li className="flex items-center gap-3 py-3">
+      <button type="button" onClick={onEdit ? () => onEdit(m) : undefined} disabled={!onEdit} aria-label={onEdit ? `Editar ${m.desc}` : undefined}
+        className="flex items-center gap-3 min-w-0 flex-1 text-left">
+      <CatIcon cat={m.cat} />
+      <div className="min-w-0 flex-1">
+        <p className="font-semibold truncate">{m.desc}</p>
+        <p className="text-xs text-muted truncate">
+          {m.cat} · {medio}{m.cuota ? ` · cuota ${pad(m.cuota.n)}/${pad(m.cuota.de)}` : ""}
+        </p>
+        {!ing && <span className={`inline-block mt-1 text-[10px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded ${m.fijo ? "bg-cousoft text-cou" : "bg-surface2 text-muted border border-line"}`}>{m.fijo ? "Fijo" : "Variable"}</span>}
+      </div>
+      <div className="text-right">
+        <p className={`num font-bold ${ing ? "text-inc" : "text-exp"}`}>{ing ? "+" : "−"}{money(m.monto)}</p>
+        <p className="num text-xs text-muted">{fmtDate(m.fecha)}</p>
+      </div>
+      </button>
+      {onDelete && <BorrarBtn onConfirm={() => onDelete(m.id)} />}
+    </li>
+  );
+}
+
+/* ---------- formulario de movimiento ---------- */
+function AgregarRapido({ label, onAdd, existe }) {
+  const [abierto, setAbierto] = useState(false);
+  const [txt, setTxt] = useState("");
+  const [err, setErr] = useState("");
+  const ok = () => {
+    const n = txt.trim();
+    if (!n) return setErr("Escribí un nombre");
+    if (existe(n)) return setErr("Ya existe");
+    onAdd(n); setTxt(""); setAbierto(false); setErr("");
+  };
+  if (!abierto) return (
+    <button type="button" onClick={() => setAbierto(true)} className="flex items-center gap-1.5 px-3 py-2 rounded-full border border-dashed border-line text-sm font-medium text-muted"><Ic n="Plus" size={15} />{label}</button>
+  );
+  return (
+    <div className="w-full flex flex-col gap-1.5">
+      <div className="flex gap-2">
+        <input autoFocus className="field flex-1 min-w-0 py-2" placeholder="Nombre" value={txt} onChange={(e) => { setTxt(e.target.value); setErr(""); }}
+          onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); ok(); } }} aria-label={label} />
+        <button type="button" onClick={ok} className="px-3.5 rounded-xl bg-brand text-brandink font-semibold text-sm">Agregar</button>
+        <button type="button" onClick={() => { setAbierto(false); setErr(""); }} className="px-3 rounded-xl bg-surface2 border border-line text-sm" aria-label="Cancelar"><Ic n="X" size={16} /></button>
+      </div>
+      {err && <p className="text-xs text-exp font-medium">{err}</p>}
+    </div>
+  );
+}
+const existeEn = (lista) => (n) => lista.some((x) => x.id.trim().toLowerCase() === n.toLowerCase());
+
+function FormMovimiento({ onSave, inicial, onAgregarCat, onAgregarMedio }) {
+  const i = inicial || {};
+  const [tipo, setTipo] = useState(i.tipo || "egreso");
+  const [monto, setMonto] = useState(i.monto ? fmtPlano.format(i.monto) : "");
+  const [desc, setDesc] = useState(i.desc || "");
+  const [cat, setCat] = useState(i.cat || (CAT_EGRESO[0] || {}).id || "");
+  const [pago, setPago] = useState(i.pago || "Tarjeta de Crédito");
+  const [tarjeta, setTarjeta] = useState(i.tarjeta || TARJETAS[0].id);
+  const [cuotaN, setCuotaN] = useState(i.cuota ? String(i.cuota.n) : "1");
+  const [cuotaDe, setCuotaDe] = useState(i.cuota ? String(i.cuota.de) : "1");
+  const [fijo, setFijo] = useState(!!i.fijo);
+  const [fecha, setFecha] = useState(i.fecha || toISO(new Date()));
+  const [err, setErr] = useState("");
+  const ing = tipo === "ingreso";
+  const cats = ing ? CAT_INGRESO : CAT_EGRESO;
+  const credito = !ing && pago === "Tarjeta de Crédito";
+  const primerMedio = (pref) => (PAGOS.some((p) => p.id === pref) ? pref : (PAGOS[0] || {}).id || "");
+  const cambiarTipo = (t) => { setTipo(t); setCat(((t === "ingreso" ? CAT_INGRESO : CAT_EGRESO)[0] || {}).id || ""); setPago(t === "ingreso" ? primerMedio("Transferencia") : CREDITO); };
+  const guardar = (e) => {
+    e.preventDefault();
+    const n = parseMonto(monto);
+    if (!(n > 0)) return setErr("Ingresá un monto mayor a cero, por ejemplo 15.000 o 77.525,87");
+    if (!fecha) return setErr("Elegí una fecha");
+    let cuota = null;
+    if (credito) {
+      const a = parseInt(cuotaN, 10), b = parseInt(cuotaDe, 10);
+      if (!(a >= 1 && b >= 1 && a <= b)) return setErr("Revisá la cuota: por ejemplo 4 de 6");
+      if (b > 1) cuota = { n: a, de: b };
+    }
+    onSave({ ...i, id: i.id || uid(), tipo, monto: n, desc: desc.trim() || cat, cat, pago, tarjeta: credito ? tarjeta : null, cuota, fijo: !ing && fijo, fecha });
+  };
+  return (
+    <form onSubmit={guardar} className="flex flex-col gap-5">
+      <Segmento value={tipo} onChange={cambiarTipo} options={[
+        { value: "egreso", label: "Egreso", icon: "ArrowUpRight", activeCls: "bg-exp text-white shadow-sm" },
+        { value: "ingreso", label: "Ingreso", icon: "ArrowDownLeft", activeCls: "bg-inc text-white shadow-sm" },
+      ]} />
+      <div className="flex flex-col items-center gap-1">
+        <label htmlFor="mov-monto" className="label">{credito && cuotaDe > 1 ? "Monto de la cuota" : "Monto"}</label>
+        <div className="flex items-baseline gap-1">
+          <span className={`display text-3xl font-bold ${ing ? "text-inc" : "text-exp"}`}>$</span>
+          <input id="mov-monto" autoFocus inputMode="decimal" placeholder="0" value={monto}
+            onChange={(e) => { setMonto(e.target.value); setErr(""); }}
+            className="num display text-4xl font-bold bg-transparent outline-none w-52 text-center border-b-2 border-line focus:border-brand pb-1" />
+        </div>
+      </div>
+      <Campo label="Detalle" htmlFor="mov-desc">
+        <input id="mov-desc" className="field" placeholder={ing ? "Ej: Sueldo de octubre" : "Ej: Universidad Siglo 21"} value={desc} onChange={(e) => setDesc(e.target.value)} />
+      </Campo>
+      <Campo label="Categoría" htmlFor="mov-cat">
+        <div className="grid grid-cols-4 gap-2" id="mov-cat">
+          {cats.map((c) => {
+            const on = cat === c.id;
+            return (
+              <button type="button" key={c.id} onClick={() => setCat(c.id)}
+                className={`flex flex-col items-center gap-1 py-2.5 px-1 rounded-2xl border text-[11px] font-semibold leading-tight transition ${on ? "border-transparent" : "border-line bg-surface2 text-muted"}`}
+                style={on ? { background: c.color + "26", color: c.color, boxShadow: `inset 0 0 0 2px ${c.color}` } : {}}>
+                <Ic n={c.icon} size={20} />{c.id}
+              </button>
+            );
+          })}
+        </div>
+        {onAgregarCat && <div className="mt-1"><AgregarRapido label="Nueva categoría" existe={existeEn(cats)} onAdd={(n) => { onAgregarCat(tipo, n); setCat(n); }} /></div>}
+      </Campo>
+      <Campo label="Medio de pago" htmlFor="mov-pago">
+        <div className="flex flex-wrap gap-2" id="mov-pago">
+          {PAGOS.map((p) => {
+            const on = pago === p.id;
+            return (
+              <button type="button" key={p.id} onClick={() => setPago(p.id)}
+                className={`flex items-center gap-1.5 px-3 py-2 rounded-full border text-sm font-medium transition ${on ? "bg-brand text-brandink border-brand" : "bg-surface2 border-line text-ink"}`}>
+                <Ic n={p.icon} size={15} />{p.id}
+              </button>
+            );
+          })}
+          {onAgregarMedio && <AgregarRapido label="Nuevo medio" existe={existeEn(PAGOS)} onAdd={(n) => { onAgregarMedio(n); setPago(n); }} />}
+        </div>
+      </Campo>
+      {credito && (
+        <div className="rounded-2xl border border-line bg-surface2 p-3.5 flex flex-col gap-3">
+          <Campo label="Tarjeta" htmlFor="mov-tarjeta">
+            <div className="grid grid-cols-3 gap-2" id="mov-tarjeta">
+              {TARJETAS.map((t) => (
+                <button type="button" key={t.id} onClick={() => setTarjeta(t.id)}
+                  className={`py-2.5 rounded-xl border text-sm font-semibold transition ${tarjeta === t.id ? "text-white border-transparent" : "bg-surface border-line"}`}
+                  style={tarjeta === t.id ? { background: t.color } : {}}>{t.id}</button>
+              ))}
+            </div>
+          </Campo>
+          <Campo label="Cuota" htmlFor="mov-cuota-n" hint="Dejá 1 de 1 si fue en un pago. Las cuotas siguientes te aparecen solas en Inicio para cargarlas cada mes.">
+            <div className="flex items-center gap-2">
+              <input id="mov-cuota-n" inputMode="numeric" className="field num text-center w-20" value={cuotaN} onChange={(e) => { setCuotaN(e.target.value.replace(/\D/g, "")); setErr(""); }} />
+              <span className="text-muted font-semibold">de</span>
+              <input id="mov-cuota-de" inputMode="numeric" className="field num text-center w-20" value={cuotaDe} onChange={(e) => { setCuotaDe(e.target.value.replace(/\D/g, "")); setErr(""); }} />
+            </div>
+          </Campo>
+        </div>
+      )}
+      {!ing && (
+        <Campo label="Tipo de gasto" htmlFor="mov-fijo">
+          <Segmento value={fijo ? "fijo" : "variable"} onChange={(v) => setFijo(v === "fijo")} options={[
+            { value: "variable", label: "Variable", activeCls: "bg-surface text-ink shadow-sm" },
+            { value: "fijo", label: "Fijo", activeCls: "bg-surface text-cou shadow-sm" },
+          ]} />
+        </Campo>
+      )}
+      <Campo label="Fecha" htmlFor="mov-fecha">
+        <input id="mov-fecha" type="date" className="field" value={fecha} onChange={(e) => setFecha(e.target.value)} />
+      </Campo>
+      {err && <p className="text-sm text-exp font-medium" role="alert">{err}</p>}
+      <button type="submit" className={`h-14 rounded-2xl font-bold text-white text-base flex items-center justify-center gap-2 ${ing ? "bg-inc" : "bg-exp"}`}>
+        <Ic n="Check" /> {i.id ? "Guardar cambios" : `Guardar ${ing ? "ingreso" : "egreso"}`}
+      </button>
+    </form>
+  );
+}
+
+/* ---------- carga de gastos fijos del mes ---------- */
+function FormFijos({ fijos, movs, onLoad, onTemplate }) {
+  const mk = monthKey(new Date());
+  const cargados = new Set(movs.filter((m) => m.fecha.startsWith(mk) && m.fijoRef).map((m) => m.fijoRef));
+  const [filas, setFilas] = useState(() => fijos.map((f) => ({ ...f, sel: !cargados.has(f.id), txt: fmtPlano.format(f.monto) })));
+  const [fecha, setFecha] = useState(toISO(new Date()));
+  const [nuevo, setNuevo] = useState(null);
+  const [err, setErr] = useState("");
+  const set = (id, patch) => setFilas((fs) => fs.map((f) => (f.id === id ? { ...f, ...patch } : f)));
+  const elegidos = filas.filter((f) => f.sel);
+  const total = sum(elegidos, (f) => parseMonto(f.txt));
+
+  const cargar = () => {
+    const malos = elegidos.filter((f) => !(parseMonto(f.txt) > 0));
+    if (malos.length) return setErr(`Revisá el monto de ${malos[0].desc}`);
+    if (!elegidos.length) return setErr("Marcá al menos un gasto");
+    const nuevosMovs = elegidos.map((f) => ({
+      id: uid(), tipo: "egreso", monto: parseMonto(f.txt), desc: f.desc, cat: f.cat, pago: f.pago,
+      tarjeta: f.pago === "Tarjeta de Crédito" ? f.tarjeta || TARJETAS[0].id : null, cuota: null, fijo: true, fijoRef: f.id, fecha,
+    }));
+    const plantilla = filas.map(({ sel, txt, ...f }) => ({ ...f, monto: parseMonto(txt) > 0 ? parseMonto(txt) : f.monto }));
+    onLoad(nuevosMovs, plantilla);
+  };
+  const quitar = (id) => { setFilas((fs) => fs.filter((f) => f.id !== id)); onTemplate((t) => t.filter((f) => f.id !== id)); };
+  const agregar = () => {
+    const n = parseMonto(nuevo.txt);
+    if (!nuevo.desc.trim()) return setErr("Escribí el nombre del gasto fijo");
+    if (!(n > 0)) return setErr("Escribí un monto de referencia");
+    const f = { id: "f-" + uid(), desc: nuevo.desc.trim(), cat: nuevo.cat, pago: nuevo.pago, tarjeta: nuevo.pago === "Tarjeta de Crédito" ? nuevo.tarjeta : null, monto: n };
+    onTemplate((t) => [...t, f]);
+    setFilas((fs) => [...fs, { ...f, sel: true, txt: fmtPlano.format(n) }]);
+    setNuevo(null); setErr("");
+  };
+
+  return (
+    <div className="flex flex-col gap-4">
+      <p className="text-sm text-muted">Los montos son los últimos que usaste. Corregí lo que haya cambiado, destildá lo que no corresponda y cargalos juntos.</p>
+      <ul className="flex flex-col gap-2">
+        {filas.map((f) => {
+          const ya = cargados.has(f.id);
+          return (
+            <li key={f.id} className={`rounded-2xl border p-3 flex items-center gap-3 ${f.sel ? "border-brand bg-brandsoft" : "border-line bg-surface2"}`}>
+              <button type="button" onClick={() => set(f.id, { sel: !f.sel })} aria-pressed={f.sel} aria-label={`Incluir ${f.desc}`}
+                className={`h-6 w-6 rounded-md border-2 grid place-items-center shrink-0 ${f.sel ? "bg-brand border-brand text-brandink" : "border-line bg-surface"}`}>
+                {f.sel && <Ic n="Check" size={14} />}
+              </button>
+              <div className="min-w-0 flex-1">
+                <p className="font-semibold text-sm truncate">{f.desc}</p>
+                <p className="text-[11px] text-muted truncate">{f.cat} · {f.pago === "Tarjeta de Crédito" ? f.tarjeta : f.pago}{ya ? " · ya cargado este mes" : ""}</p>
+              </div>
+              <input id={`fijo-${f.id}`} inputMode="decimal" aria-label={`Monto ${f.desc}`} value={f.txt} onChange={(e) => { set(f.id, { txt: e.target.value }); setErr(""); }}
+                className="num w-28 text-right bg-surface border border-line rounded-xl px-2.5 py-2 text-sm font-semibold outline-none focus:border-brand" />
+              <BorrarBtn onConfirm={() => quitar(f.id)} />
+            </li>
+          );
+        })}
+      </ul>
+
+      {nuevo ? (
+        <div className="rounded-2xl border border-line p-3.5 flex flex-col gap-3">
+          <input id="fn-desc" className="field" placeholder="Nombre. Ej: Internet Fibertel" value={nuevo.desc} onChange={(e) => setNuevo({ ...nuevo, desc: e.target.value })} />
+          <div className="grid grid-cols-2 gap-2">
+            <select id="fn-cat" className="field" value={nuevo.cat} onChange={(e) => setNuevo({ ...nuevo, cat: e.target.value })}>
+              {CAT_EGRESO.map((c) => <option key={c.id}>{c.id}</option>)}
+            </select>
+            <input id="fn-monto" inputMode="decimal" className="field num" placeholder="Monto" value={nuevo.txt} onChange={(e) => setNuevo({ ...nuevo, txt: e.target.value })} />
+          </div>
+          <select id="fn-pago" className="field" value={nuevo.pago === "Tarjeta de Crédito" ? "TC|" + nuevo.tarjeta : nuevo.pago}
+            onChange={(e) => { const v = e.target.value; v.startsWith("TC|") ? setNuevo({ ...nuevo, pago: "Tarjeta de Crédito", tarjeta: v.slice(3) }) : setNuevo({ ...nuevo, pago: v }); }}>
+            {PAGOS.filter((p) => p.id !== "Tarjeta de Crédito").map((p) => <option key={p.id} value={p.id}>{p.id}</option>)}
+            {TARJETAS.map((t) => <option key={t.id} value={"TC|" + t.id}>Tarjeta {t.id}</option>)}
+          </select>
+          <div className="flex gap-2">
+            <button type="button" onClick={agregar} className="flex-1 h-11 rounded-xl bg-brand text-brandink font-semibold">Agregar a mis fijos</button>
+            <button type="button" onClick={() => setNuevo(null)} className="px-4 h-11 rounded-xl bg-surface2 border border-line font-semibold">Cancelar</button>
+          </div>
+        </div>
+      ) : (
+        <button type="button" onClick={() => setNuevo({ desc: "", cat: (CAT_EGRESO[0] || {}).id || "", pago: (PAGOS.find((p) => p.id !== CREDITO) || {}).id || CREDITO, tarjeta: TARJETAS[0].id, txt: "" })}
+          className="h-11 rounded-xl border-2 border-dashed border-line text-muted font-semibold text-sm flex items-center justify-center gap-2"><Ic n="Plus" size={16} />Agregar otro gasto fijo</button>
+      )}
+
+      <Campo label="Fecha de carga" htmlFor="fijos-fecha">
+        <input id="fijos-fecha" type="date" className="field" value={fecha} onChange={(e) => setFecha(e.target.value)} />
+      </Campo>
+      {err && <p className="text-sm text-exp font-medium" role="alert">{err}</p>}
+      <button type="button" onClick={cargar} className="h-14 rounded-2xl font-bold text-white bg-exp flex items-center justify-center gap-2">
+        <Ic n="Check" /> Cargar {elegidos.length} {elegidos.length === 1 ? "gasto" : "gastos"} · <span className="num">{money(total)}</span>
+      </button>
+    </div>
+  );
+}
+
+/* ---------- Dashboard ---------- */
+function Dashboard({ data, ir, abrir, onEdit, onDelete }) {
+  const tk = useTokens();
+  const hoy = new Date();
+  const mk = monthKey(hoy);
+  const { movs, deudas, metas, cousteau, fijos, empresa } = data;
+  const empMes = sum(empresa.filter((e) => e.fecha.startsWith(mk)));
+  const cuotasPend = cuotasActivas(movs, hoy).filter((a) => !a.cargadaEsteMes);
+
+  const ingTot = sum(movs.filter((m) => m.tipo === "ingreso"));
+  const egrTot = sum(movs.filter((m) => m.tipo === "egreso"));
+  const aportes = sum(cousteau.filter((c) => c.tipo === "aporte"));
+  const devol = sum(cousteau.filter((c) => c.tipo === "devolucion"));
+  const balance = ingTot - egrTot - aportes + devol;
+  const cousteauDebe = aportes - devol;
+
+  const delMes = movs.filter((m) => m.fecha.startsWith(mk));
+  const egrMesL = delMes.filter((m) => m.tipo === "egreso");
+  const ingMes = sum(delMes.filter((m) => m.tipo === "ingreso"));
+  const egrMes = sum(egrMesL);
+  const fijoMes = sum(egrMesL.filter((m) => m.fijo));
+  const enMetas = sum(metas, (m) => m.actual);
+  const debo = sum(deudas.filter((d) => d.tipo === "debo"), (d) => Math.max(0, d.total - d.pagado));
+  const meDeben = sum(deudas.filter((d) => d.tipo === "meDeben"), (d) => Math.max(0, d.total - d.pagado));
+  const fijosCargados = new Set(delMes.filter((m) => m.fijoRef).map((m) => m.fijoRef));
+  const fijosPend = fijos.filter((f) => !fijosCargados.has(f.id)).length;
+
+  const torta = useMemo(() => {
+    const g = {};
+    egrMesL.forEach((m) => { g[m.cat] = (g[m.cat] || 0) + m.monto; });
+    return Object.entries(g).map(([name, value]) => ({ name, value, color: (CATS[name] || {}).color || "#8E9A94" })).sort((a, b) => b.value - a.value);
+  }, [movs]);
+
+  const tarjetas = TARJETAS.map((t) => {
+    const items = egrMesL.filter((m) => m.pago === "Tarjeta de Crédito" && m.tarjeta === t.id);
+    return { ...t, total: sum(items), n: items.length, cuotas: items.filter((m) => m.cuota).length };
+  });
+
+  const barras = useMemo(() => {
+    const out = [];
+    for (let i = 5; i >= 0; i--) {
+      const d = new Date(hoy.getFullYear(), hoy.getMonth() - i, 1);
+      const ms = movs.filter((m) => m.fecha.startsWith(monthKey(d)));
+      out.push({ mes: MESES[d.getMonth()], Ingresos: sum(ms.filter((m) => m.tipo === "ingreso")), Egresos: sum(ms.filter((m) => m.tipo === "egreso")) });
+    }
+    return out;
+  }, [movs]);
+  const hayBarras = barras.some((b) => b.Ingresos || b.Egresos);
+
+  const ultimos = [...movs].sort((a, b) => b.fecha.localeCompare(a.fecha)).slice(0, 5);
+  const ttStyle = { background: tk.surface, border: `1px solid ${tk.line}`, borderRadius: 12, color: tk.ink, fontSize: 13 };
+  const mesNombre = MESES_L[hoy.getMonth()];
+
+  return (
+    <div className="flex flex-col gap-4">
+      <section className="rounded-3xl p-5 bg-brand text-brandink relative overflow-hidden">
+        <svg className="absolute -right-6 -bottom-8 opacity-15" width="170" height="170" viewBox="0 0 100 100" aria-hidden="true">
+          <circle cx="50" cy="50" r="46" fill="none" stroke="currentColor" strokeWidth="6" />
+          <circle cx="50" cy="50" r="30" fill="none" stroke="currentColor" strokeWidth="6" />
+          <circle cx="50" cy="50" r="14" fill="currentColor" />
+        </svg>
+        <p className="text-xs uppercase tracking-[.1em] font-semibold opacity-80">Balance total</p>
+        <p className="num display text-[2.3rem] leading-tight font-bold mt-1">{money(balance)}</p>
+        <p className="text-sm opacity-85 mt-1">Ingresos menos egresos y lo puesto en Cousteau</p>
+        {enMetas > 0 && <p className="text-sm opacity-85 mt-0.5 flex items-center gap-1.5"><Ic n="PiggyBank" size={15} /> {money(enMetas)} apartados en metas</p>}
+      </section>
+
+      <div className="grid grid-cols-2 gap-3">
+        <div className="rounded-2xl bg-surface border border-line p-4">
+          <div className="flex items-center gap-2 text-inc"><span className="h-7 w-7 grid place-items-center rounded-full bg-incsoft"><Ic n="ArrowDownLeft" size={16} /></span><span className="label">Ingresos</span></div>
+          <p className="num display text-xl font-bold mt-2.5 break-words">{money(ingMes)}</p>
+          <p className="text-xs text-muted mt-0.5">en {mesNombre}</p>
+        </div>
+        <div className="rounded-2xl bg-surface border border-line p-4">
+          <div className="flex items-center gap-2 text-exp"><span className="h-7 w-7 grid place-items-center rounded-full bg-expsoft"><Ic n="ArrowUpRight" size={16} /></span><span className="label">Egresos</span></div>
+          <p className="num display text-xl font-bold mt-2.5 break-words">{money(egrMes)}</p>
+          <p className="text-xs text-muted mt-0.5">{egrMes > 0 ? `${money(fijoMes)} fijos` : `en ${mesNombre}`}</p>
+        </div>
+      </div>
+
+      {empMes > 0 && (
+        <button onClick={() => ir("empresa")} className="rounded-2xl bg-surface border border-line px-4 py-3 text-left flex flex-col gap-2">
+          <div className="flex items-baseline justify-between gap-2">
+            <span className="label">Costo de vida de {mesNombre}</span>
+            <span className="num display font-bold text-lg">{money(egrMes + empMes)}</span>
+          </div>
+          <div className="h-2.5 rounded-full overflow-hidden flex bg-surface2">
+            <div style={{ width: `${(egrMes / (egrMes + empMes)) * 100}%`, background: "var(--exp)" }} />
+            <div style={{ width: `${(empMes / (egrMes + empMes)) * 100}%`, background: "var(--emp)" }} />
+          </div>
+          <p className="text-xs text-muted">Tus egresos más lo que pagó la empresa</p>
+        </button>
+      )}
+
+      {fijos.length > 0 && (
+        <button onClick={() => abrir("fijos")} className={`rounded-2xl p-4 flex items-center gap-3 text-left border ${fijosPend ? "bg-surface border-brand" : "bg-surface border-line"}`}>
+          <span className="h-10 w-10 grid place-items-center rounded-2xl bg-brandsoft text-brand shrink-0"><Ic n="CalendarCheck" size={20} /></span>
+          <div className="flex-1 min-w-0">
+            <p className="font-semibold">Gastos fijos de {mesNombre}</p>
+            <p className="text-sm text-muted">{fijosPend ? `Te faltan cargar ${fijosPend} de ${fijos.length}` : "Ya cargaste todos"}</p>
+          </div>
+          {fijosPend > 0 && <span className="px-3 py-1.5 rounded-full bg-brand text-brandink text-sm font-semibold">Cargar</span>}
+        </button>
+      )}
+
+      {cuotasPend.length > 0 && (
+        <button onClick={() => abrir("cuotas")} className="rounded-2xl p-4 flex items-center gap-3 text-left border bg-surface border-brand">
+          <span className="h-10 w-10 grid place-items-center rounded-2xl bg-brandsoft text-brand shrink-0"><Ic n="CreditCard" size={20} /></span>
+          <div className="flex-1 min-w-0">
+            <p className="font-semibold">Cuotas de {mesNombre}</p>
+            <p className="text-sm text-muted">Te faltan cargar {cuotasPend.length} · <span className="num">{money(sum(cuotasPend))}</span></p>
+          </div>
+          <span className="px-3 py-1.5 rounded-full bg-brand text-brandink text-sm font-semibold">Cargar</span>
+        </button>
+      )}
+
+      <div className="grid grid-cols-2 gap-3">
+        <button onClick={() => ir("cousteau")} className="rounded-2xl bg-cousoft p-4 text-left">
+          <p className="label flex items-center gap-1.5" style={{ color: "var(--cou)" }}><Ic n="Store" size={14} />Cousteau te debe</p>
+          <p className="num display text-lg font-bold mt-1.5 break-words">{money(cousteauDebe)}</p>
+        </button>
+        <button onClick={() => ir("empresa")} className="rounded-2xl bg-empsoft p-4 text-left">
+          <p className="label flex items-center gap-1.5" style={{ color: "var(--emp)" }}><Ic n="Building2" size={14} />Pagó la empresa</p>
+          <p className="num display text-lg font-bold mt-1.5 break-words">{money(empMes)}</p>
+          <p className="text-xs text-muted mt-0.5">en {mesNombre}</p>
+        </button>
+      </div>
+      <button onClick={() => ir("deudas")} className="rounded-2xl bg-surface border border-line px-4 py-3 flex items-center gap-3 text-left">
+        <span className="h-9 w-9 grid place-items-center rounded-full bg-debtsoft text-debt shrink-0"><Ic n="HandCoins" size={18} /></span>
+        <div className="flex-1 grid grid-cols-2 gap-2 text-sm min-w-0">
+          <div className="min-w-0"><p className="text-muted text-xs">Debés</p><p className="num font-bold text-debt break-words">{money(debo)}</p></div>
+          <div className="min-w-0"><p className="text-muted text-xs">Te deben</p><p className="num font-bold text-inc break-words">{money(meDeben)}</p></div>
+        </div>
+        <Ic n="ChevronRight" className="text-muted" />
+      </button>
+
+      <section className="rounded-3xl bg-surface border border-line p-5">
+        <h2 className="display text-lg font-bold">¿A dónde se va la plata?</h2>
+        <p className="text-sm text-muted">Egresos de {mesNombre} por rubro</p>
+        {torta.length === 0 ? (
+          <div className="py-8 text-center text-sm text-muted">
+            <Ic n="PieChart" size={28} className="mx-auto mb-2" />
+            Cuando cargues egresos de este mes vas a ver acá cómo se reparten.
+          </div>
+        ) : (
+          <>
+            <div className="relative h-56 mt-2">
+              {PieChart && (
+                <ResponsiveContainer width="100%" height="100%">
+                  <PieChart>
+                    <Pie data={torta} dataKey="value" nameKey="name" innerRadius="62%" outerRadius="92%" paddingAngle={2} stroke="none" isAnimationActive={false}>
+                      {torta.map((t) => <Cell key={t.name} fill={t.color} />)}
+                    </Pie>
+                    <Tooltip formatter={(v) => money(v)} contentStyle={ttStyle} itemStyle={{ color: tk.ink }} />
+                  </PieChart>
+                </ResponsiveContainer>
+              )}
+              <div className="absolute inset-0 grid place-items-center pointer-events-none">
+                <div className="text-center"><p className="label">Total</p><p className="num display font-bold text-lg">{money(egrMes)}</p></div>
+              </div>
+            </div>
+            <ul className="mt-3 flex flex-col gap-2.5">
+              {torta.map((t) => {
+                const pct = egrMes ? (t.value / egrMes) * 100 : 0;
+                return (
+                  <li key={t.name} className="flex flex-col gap-1">
+                    <div className="flex items-center gap-2 text-sm">
+                      <span className="h-2.5 w-2.5 rounded-full shrink-0" style={{ background: t.color }} />
+                      <span className="flex-1 font-medium min-w-0 truncate">{t.name}</span>
+                      <span className="num text-muted w-10 text-right">{Math.round(pct)}%</span>
+                      <span className="num font-semibold text-right">{money(t.value)}</span>
+                    </div>
+                    <div className="h-1.5 rounded-full bg-surface2 overflow-hidden ml-[18px]"><div className="h-full rounded-full" style={{ width: `${pct}%`, background: t.color }} /></div>
+                  </li>
+                );
+              })}
+            </ul>
+          </>
+        )}
+      </section>
+
+      <section className="rounded-3xl bg-surface border border-line p-5">
+        <h2 className="display text-lg font-bold">Tarjetas de {mesNombre}</h2>
+        <p className="text-sm text-muted">Lo que cargaste con cada tarjeta este mes</p>
+        <ul className="mt-3 flex flex-col gap-2.5">
+          {tarjetas.map((t) => (
+            <li key={t.id} className="flex items-center gap-3 rounded-2xl bg-surface2 border border-line p-3">
+              <span className="h-9 w-12 rounded-lg grid place-items-center text-white shrink-0" style={{ background: t.color }}><Ic n="CreditCard" size={18} /></span>
+              <div className="flex-1 min-w-0">
+                <p className="font-semibold text-sm">{t.id}</p>
+                <p className="text-xs text-muted">{t.n ? `${t.n} consumos${t.cuotas ? `, ${t.cuotas} en cuotas` : ""}` : "Sin consumos cargados"}</p>
+              </div>
+              <p className="num font-bold">{money(t.total)}</p>
+            </li>
+          ))}
+        </ul>
+      </section>
+
+      <CuotasQueVienen movs={movs} tk={tk} />
+
+      <section className="rounded-3xl bg-surface border border-line p-5">
+        <div className="flex items-end justify-between gap-2 flex-wrap">
+          <div>
+            <h2 className="display text-lg font-bold">Ingresos vs egresos</h2>
+            <p className="text-sm text-muted">Últimos 6 meses</p>
+          </div>
+          <div className="flex gap-3 text-xs font-semibold">
+            <span className="flex items-center gap-1.5"><span className="h-2.5 w-2.5 rounded-sm bg-inc" />Ingresos</span>
+            <span className="flex items-center gap-1.5"><span className="h-2.5 w-2.5 rounded-sm bg-exp" />Egresos</span>
+          </div>
+        </div>
+        {hayBarras ? (
+          <div className="h-56 mt-4 -ml-2">
+            {BarChart && (
+              <ResponsiveContainer width="100%" height="100%">
+                <BarChart data={barras} barGap={3} barCategoryGap="22%">
+                  <CartesianGrid vertical={false} stroke={tk.line} strokeDasharray="3 3" />
+                  <XAxis dataKey="mes" tick={{ fill: tk.muted, fontSize: 12 }} axisLine={false} tickLine={false} />
+                  <YAxis tick={{ fill: tk.muted, fontSize: 11 }} axisLine={false} tickLine={false} width={44} tickFormatter={(v) => fmtCompact.format(v)} />
+                  <Tooltip formatter={(v) => money(v)} contentStyle={ttStyle} cursor={{ fill: tk.line, opacity: 0.35 }} labelStyle={{ color: tk.muted }} />
+                  <Bar dataKey="Ingresos" fill={tk.inc} radius={[6, 6, 0, 0]} isAnimationActive={false} />
+                  <Bar dataKey="Egresos" fill={tk.exp} radius={[6, 6, 0, 0]} isAnimationActive={false} />
+                </BarChart>
+              </ResponsiveContainer>
+            )}
+          </div>
+        ) : (
+          <div className="py-8 text-center text-sm text-muted"><Ic n="BarChart3" size={28} className="mx-auto mb-2" />Este gráfico se arma solo a medida que cargás meses.</div>
+        )}
+      </section>
+
+      <section className="rounded-3xl bg-surface border border-line p-5">
+        <div className="flex items-center justify-between">
+          <h2 className="display text-lg font-bold">Últimos movimientos</h2>
+          {ultimos.length > 0 && <button onClick={() => ir("historial")} className="text-sm font-semibold text-brand flex items-center gap-0.5">Ver todos <Ic n="ChevronRight" size={16} /></button>}
+        </div>
+        {ultimos.length ? <ul className="divide-y divide-line">{ultimos.map((m) => <FilaMov key={m.id} m={m} onEdit={onEdit} onDelete={onDelete} />)}</ul>
+          : <p className="text-sm text-muted py-6 text-center">Cargá tu primer movimiento con el botón +</p>}
+      </section>
+    </div>
+  );
+}
+
+/* ---------- Historial ---------- */
+function Historial({ data, onDelete, onEdit, abrir }) {
+  const hoy = new Date();
+  const [ref, setRef] = useState(new Date(hoy.getFullYear(), hoy.getMonth(), 1));
+  const [filtro, setFiltro] = useState("todos");
+  const [q, setQ] = useState("");
+  const mk = monthKey(ref);
+  const delMes = data.movs.filter((m) => m.fecha.startsWith(mk));
+  const ing = sum(delMes.filter((m) => m.tipo === "ingreso"));
+  const egr = sum(delMes.filter((m) => m.tipo === "egreso"));
+  const lista = delMes
+    .filter((m) => filtro === "todos" || (filtro === "fijo" ? m.tipo === "egreso" && m.fijo : m.tipo === filtro))
+    .filter((m) => !q || [m.desc, m.cat, m.pago, m.tarjeta || ""].join(" ").toLowerCase().includes(q.toLowerCase()))
+    .sort((a, b) => b.fecha.localeCompare(a.fecha));
+  const grupos = lista.reduce((acc, m) => { (acc[m.fecha] = acc[m.fecha] || []).push(m); return acc; }, {});
+  const esActual = mk === monthKey(hoy);
+  const mover = (n) => setRef(new Date(ref.getFullYear(), ref.getMonth() + n, 1));
+
+  return (
+    <div className="flex flex-col gap-4">
+      <div className="flex items-center justify-between rounded-2xl bg-surface border border-line p-1.5">
+        <button onClick={() => mover(-1)} className="h-10 w-10 grid place-items-center rounded-xl hover:bg-surface2" aria-label="Mes anterior"><Ic n="ChevronLeft" /></button>
+        <p className="display font-bold capitalize">{MESES_L[ref.getMonth()]} {ref.getFullYear()}</p>
+        <button onClick={() => mover(1)} disabled={esActual} className="h-10 w-10 grid place-items-center rounded-xl hover:bg-surface2 disabled:opacity-30" aria-label="Mes siguiente"><Ic n="ChevronRight" /></button>
+      </div>
+      <div className="grid grid-cols-3 gap-2 text-center">
+        <div className="rounded-2xl bg-incsoft p-3 min-w-0"><p className="text-[11px] font-semibold text-inc uppercase tracking-wide">Entró</p><p className="num font-bold text-sm mt-1 break-words">{money(ing)}</p></div>
+        <div className="rounded-2xl bg-expsoft p-3 min-w-0"><p className="text-[11px] font-semibold text-exp uppercase tracking-wide">Salió</p><p className="num font-bold text-sm mt-1 break-words">{money(egr)}</p></div>
+        <div className="rounded-2xl bg-surface border border-line p-3 min-w-0"><p className="text-[11px] font-semibold text-muted uppercase tracking-wide">Neto</p><p className={`num font-bold text-sm mt-1 break-words ${ing - egr >= 0 ? "text-inc" : "text-exp"}`}>{money(ing - egr)}</p></div>
+      </div>
+      <div className="relative">
+        <span className="absolute left-3.5 top-1/2 -translate-y-1/2 text-muted"><Ic n="Search" size={17} /></span>
+        <input id="mov-buscar" className="field pl-10" placeholder="Buscar por detalle, rubro o tarjeta" value={q} onChange={(e) => setQ(e.target.value)} />
+      </div>
+      <p className="text-xs text-muted -mt-1 px-1">Tocá un movimiento para editarlo, o el tachito para eliminarlo.</p>
+      <Segmento value={filtro} onChange={setFiltro} options={[
+        { value: "todos", label: "Todos", activeCls: "bg-surface text-ink shadow-sm" },
+        { value: "ingreso", label: "Ingresos", activeCls: "bg-surface text-inc shadow-sm" },
+        { value: "egreso", label: "Egresos", activeCls: "bg-surface text-exp shadow-sm" },
+        { value: "fijo", label: "Fijos", activeCls: "bg-surface text-cou shadow-sm" },
+      ]} />
+      {Object.keys(grupos).length === 0 ? (
+        <Vacio icon="Receipt">
+          <p>No hay movimientos para mostrar en este mes.</p>
+          {esActual && <button onClick={() => abrir("fijos")} className="mt-3 px-4 py-2 rounded-full bg-brandsoft text-brand font-semibold">Cargar gastos fijos</button>}
+        </Vacio>
+      ) : Object.entries(grupos).map(([f, ms]) => {
+        const d = new Date(f + "T12:00:00");
+        const neto = ms.reduce((a, m) => a + (m.tipo === "ingreso" ? m.monto : -m.monto), 0);
+        return (
+          <section key={f} className="rounded-3xl bg-surface border border-line px-4 pt-3 pb-1">
+            <div className="flex justify-between items-baseline">
+              <p className="label">{DIAS[d.getDay()]} {fmtDate(f).slice(0, 5)}</p>
+              <p className={`num text-xs font-semibold ${neto >= 0 ? "text-inc" : "text-exp"}`}>{neto >= 0 ? "+" : "−"}{money(Math.abs(neto))}</p>
+            </div>
+            <ul className="divide-y divide-line">{ms.map((m) => <FilaMov key={m.id} m={m} onDelete={onDelete} onEdit={onEdit} />)}</ul>
+          </section>
+        );
+      })}
+    </div>
+  );
+}
+
+/* ---------- Cousteau ---------- */
+function FormCousteau({ tipoInicial, pendiente, onSave }) {
+  const [tipo, setTipo] = useState(tipoInicial);
+  const [monto, setMonto] = useState("");
+  const [detalle, setDetalle] = useState("");
+  const [medio, setMedio] = useState("Transferencia");
+  const [fecha, setFecha] = useState(toISO(new Date()));
+  const [err, setErr] = useState("");
+  const aporte = tipo === "aporte";
+  const guardar = (e) => {
+    e.preventDefault();
+    const n = parseMonto(monto);
+    if (!(n > 0)) return setErr("Ingresá un monto mayor a cero");
+    if (!aporte && n > pendiente + 0.001) return setErr(`Cousteau te debe ${money(pendiente)}. La devolución no puede ser mayor.`);
+    onSave({ id: uid(), tipo, monto: n, detalle: detalle.trim(), medio, fecha });
+  };
+  return (
+    <form onSubmit={guardar} className="flex flex-col gap-5">
+      <Segmento value={tipo} onChange={(t) => { setTipo(t); setErr(""); }} options={[
+        { value: "aporte", label: "Puse plata", icon: "ArrowUpRight", activeCls: "bg-cou text-white shadow-sm" },
+        { value: "devolucion", label: "Me devolvió", icon: "ArrowDownLeft", activeCls: "bg-inc text-white shadow-sm" },
+      ]} />
+      <div className="flex flex-col items-center gap-1">
+        <label htmlFor="cou-monto" className="label">Monto</label>
+        <div className="flex items-baseline gap-1">
+          <span className={`display text-3xl font-bold ${aporte ? "text-cou" : "text-inc"}`}>$</span>
+          <input id="cou-monto" autoFocus inputMode="decimal" placeholder="0" value={monto} onChange={(e) => { setMonto(e.target.value); setErr(""); }}
+            className="num display text-4xl font-bold bg-transparent outline-none w-52 text-center border-b-2 border-line focus:border-brand pb-1" />
+        </div>
+        {!aporte && pendiente > 0 && (
+          <button type="button" onClick={() => setMonto(fmtPlano.format(pendiente))} className="text-xs font-semibold text-brand mt-1">Devolvió todo: {money(pendiente)}</button>
+        )}
+      </div>
+      <Campo label="Detalle" htmlFor="cou-detalle">
+        <input id="cou-detalle" className="field" placeholder={aporte ? "Ej: pago a proveedor, compra de freezer" : "Ej: devolución parcial de octubre"} value={detalle} onChange={(e) => setDetalle(e.target.value)} />
+      </Campo>
+      <Campo label="Medio" htmlFor="cou-medio">
+        <div className="flex flex-wrap gap-2" id="cou-medio">
+          {PAGOS.map((x) => x.id).map((p) => (
+            <button type="button" key={p} onClick={() => setMedio(p)}
+              className={`px-3 py-2 rounded-full border text-sm font-medium ${medio === p ? "bg-brand text-brandink border-brand" : "bg-surface2 border-line"}`}>{p}</button>
+          ))}
+        </div>
+      </Campo>
+      <Campo label="Fecha" htmlFor="cou-fecha">
+        <input id="cou-fecha" type="date" className="field" value={fecha} onChange={(e) => setFecha(e.target.value)} />
+      </Campo>
+      {err && <p className="text-sm text-exp font-medium" role="alert">{err}</p>}
+      <button type="submit" className={`h-14 rounded-2xl font-bold text-white flex items-center justify-center gap-2 ${aporte ? "bg-cou" : "bg-inc"}`}>
+        <Ic n="Check" /> {aporte ? "Guardar aporte" : "Guardar devolución"}
+      </button>
+    </form>
+  );
+}
+
+function Cousteau({ data, setData, abrir }) {
+  const regs = data.cousteau;
+  const aportes = sum(regs.filter((c) => c.tipo === "aporte"));
+  const devol = sum(regs.filter((c) => c.tipo === "devolucion"));
+  const pend = aportes - devol;
+  const pct = aportes ? (devol / aportes) * 100 : 0;
+  const lista = [...regs].sort((a, b) => b.fecha.localeCompare(a.fecha));
+  const borrar = (id) => setData((s) => ({ ...s, cousteau: s.cousteau.filter((c) => c.id !== id) }));
+  return (
+    <div className="flex flex-col gap-4">
+      <section className="rounded-3xl p-5 bg-cou text-white relative overflow-hidden">
+        <span className="absolute -right-4 -bottom-6 opacity-15"><Ic n="Store" size={140} /></span>
+        <p className="text-xs uppercase tracking-[.1em] font-semibold opacity-85">Cousteau te debe</p>
+        <p className="num display text-[2.3rem] leading-tight font-bold mt-1">{money(pend)}</p>
+        <div className="mt-3 h-2.5 rounded-full bg-white/25 overflow-hidden"><div className="h-full rounded-full bg-white transition-all" style={{ width: `${Math.min(100, pct)}%` }} /></div>
+        <p className="text-sm opacity-90 mt-2">{aportes ? `Te devolvió el ${Math.round(pct)}% de lo que pusiste` : "Registrá la plata que fuiste poniendo"}</p>
+      </section>
+
+      <div className="grid grid-cols-2 gap-3">
+        <div className="rounded-2xl bg-surface border border-line p-4 min-w-0"><p className="label">Pusiste</p><p className="num display text-lg font-bold mt-1.5 break-words">{money(aportes)}</p></div>
+        <div className="rounded-2xl bg-surface border border-line p-4 min-w-0"><p className="label">Te devolvió</p><p className="num display text-lg font-bold mt-1.5 text-inc break-words">{money(devol)}</p></div>
+      </div>
+
+      <div className="grid grid-cols-2 gap-3">
+        <button onClick={() => abrir("cou-aporte")} className="h-12 rounded-2xl bg-cousoft text-cou font-semibold flex items-center justify-center gap-2"><Ic n="ArrowUpRight" size={18} />Puse plata</button>
+        <button onClick={() => abrir("cou-devolucion")} disabled={pend <= 0} className="h-12 rounded-2xl bg-incsoft text-inc font-semibold flex items-center justify-center gap-2 disabled:opacity-40"><Ic n="ArrowDownLeft" size={18} />Me devolvió</button>
+      </div>
+
+      {lista.length === 0 ? (
+        <Vacio icon="Store">Todavía no hay aportes cargados. Empezá por lo que ya pusiste, con su fecha aproximada.</Vacio>
+      ) : (
+        <section className="rounded-3xl bg-surface border border-line px-4 pt-3 pb-1">
+          <p className="label">Historial</p>
+          <ul className="divide-y divide-line">
+            {lista.map((c) => {
+              const ap = c.tipo === "aporte";
+              return (
+                <li key={c.id} className="flex items-center gap-3 py-3">
+                  <span className={`h-10 w-10 grid place-items-center rounded-2xl shrink-0 ${ap ? "bg-cousoft text-cou" : "bg-incsoft text-inc"}`}><Ic n={ap ? "ArrowUpRight" : "ArrowDownLeft"} size={19} /></span>
+                  <div className="min-w-0 flex-1">
+                    <p className="font-semibold truncate">{c.detalle || (ap ? "Aporte" : "Devolución")}</p>
+                    <p className="text-xs text-muted truncate">{ap ? "Puse plata" : "Me devolvió"} · {c.medio}</p>
+                  </div>
+                  <div className="text-right">
+                    <p className={`num font-bold ${ap ? "text-cou" : "text-inc"}`}>{ap ? "" : "+"}{money(c.monto)}</p>
+                    <p className="num text-xs text-muted">{fmtDate(c.fecha)}</p>
+                  </div>
+                  <BorrarBtn onConfirm={() => borrar(c.id)} />
+                </li>
+              );
+            })}
+          </ul>
+        </section>
+      )}
+      <p className="text-xs text-muted px-1">Lo que ponés en Cousteau baja tu balance y lo que te devuelve lo sube. No cuenta como gasto ni como ingreso en los gráficos.</p>
+    </div>
+  );
+}
+
+/* ---------- Gastos que paga la empresa (solo registro, no tocan tu plata) ---------- */
+function FormEmpresa({ onSave }) {
+  const [monto, setMonto] = useState("");
+  const [detalle, setDetalle] = useState("");
+  const [cat, setCat] = useState("Combustible");
+  const [fecha, setFecha] = useState(toISO(new Date()));
+  const [err, setErr] = useState("");
+  const guardar = (e) => {
+    e.preventDefault();
+    const n = parseMonto(monto);
+    if (!(n > 0)) return setErr("Ingresá un monto mayor a cero");
+    onSave({ id: uid(), monto: n, detalle: detalle.trim() || cat, cat, fecha });
+  };
+  return (
+    <form onSubmit={guardar} className="flex flex-col gap-5">
+      <p className="text-sm text-muted -mt-1">Lo paga la empresa directamente. Se registra para saber cuánto cuesta tu vida, pero no toca tu balance.</p>
+      <div className="flex flex-col items-center gap-1">
+        <label htmlFor="emp-monto" className="label">Monto</label>
+        <div className="flex items-baseline gap-1">
+          <span className="display text-3xl font-bold text-emp">$</span>
+          <input id="emp-monto" autoFocus inputMode="decimal" placeholder="0" value={monto} onChange={(e) => { setMonto(e.target.value); setErr(""); }}
+            className="num display text-4xl font-bold bg-transparent outline-none w-52 text-center border-b-2 border-line focus:border-brand pb-1" />
+        </div>
+      </div>
+      <Campo label="Detalle" htmlFor="emp-detalle">
+        <input id="emp-detalle" className="field" placeholder="Ej: Nafta YPF" value={detalle} onChange={(e) => setDetalle(e.target.value)} />
+      </Campo>
+      <Campo label="Rubro" htmlFor="emp-cat">
+        <div className="flex flex-wrap gap-2" id="emp-cat">
+          {CAT_EMPRESA.map((c) => (
+            <button type="button" key={c.id} onClick={() => setCat(c.id)}
+              className={`flex items-center gap-1.5 px-3 py-2 rounded-full border text-sm font-medium ${cat === c.id ? "bg-emp text-white border-transparent" : "bg-surface2 border-line"}`}>
+              <Ic n={c.icon} size={15} />{c.id}
+            </button>
+          ))}
+        </div>
+      </Campo>
+      <Campo label="Fecha" htmlFor="emp-fecha">
+        <input id="emp-fecha" type="date" className="field" value={fecha} onChange={(e) => setFecha(e.target.value)} />
+      </Campo>
+      {err && <p className="text-sm text-exp font-medium" role="alert">{err}</p>}
+      <button type="submit" className="h-14 rounded-2xl font-bold text-white bg-emp flex items-center justify-center gap-2"><Ic n="Check" /> Guardar gasto</button>
+    </form>
+  );
+}
+
+function Empresa({ data, setData, abrir }) {
+  const hoy = new Date();
+  const [ref, setRef] = useState(new Date(hoy.getFullYear(), hoy.getMonth(), 1));
+  const mk = monthKey(ref);
+  const esActual = mk === monthKey(hoy);
+  const delMes = data.empresa.filter((e) => e.fecha.startsWith(mk)).sort((a, b) => b.fecha.localeCompare(a.fecha));
+  const totEmp = sum(delMes);
+  const totYo = sum(data.movs.filter((m) => m.tipo === "egreso" && m.fecha.startsWith(mk)));
+  const costo = totEmp + totYo;
+  const porRubro = Object.entries(delMes.reduce((a, e) => { a[e.cat] = (a[e.cat] || 0) + e.monto; return a; }, {})).sort((a, b) => b[1] - a[1]);
+  const borrar = (id) => setData((s) => ({ ...s, empresa: s.empresa.filter((x) => x.id !== id) }));
+  const mover = (n) => setRef(new Date(ref.getFullYear(), ref.getMonth() + n, 1));
+
+  return (
+    <div className="flex flex-col gap-4">
+      <div className="flex items-center justify-between rounded-2xl bg-surface border border-line p-1.5">
+        <button onClick={() => mover(-1)} className="h-10 w-10 grid place-items-center rounded-xl hover:bg-surface2" aria-label="Mes anterior"><Ic n="ChevronLeft" /></button>
+        <p className="display font-bold capitalize">{MESES_L[ref.getMonth()]} {ref.getFullYear()}</p>
+        <button onClick={() => mover(1)} disabled={esActual} className="h-10 w-10 grid place-items-center rounded-xl hover:bg-surface2 disabled:opacity-30" aria-label="Mes siguiente"><Ic n="ChevronRight" /></button>
+      </div>
+
+      <section className="rounded-3xl p-5 bg-emp text-white relative overflow-hidden">
+        <span className="absolute -right-4 -bottom-6 opacity-15"><Ic n="Building2" size={140} /></span>
+        <p className="text-xs uppercase tracking-[.1em] font-semibold opacity-85">Pagó la empresa</p>
+        <p className="num display text-[2.3rem] leading-tight font-bold mt-1">{money(totEmp)}</p>
+        <p className="text-sm opacity-90 mt-1">{delMes.length} {delMes.length === 1 ? "gasto" : "gastos"} en {MESES_L[ref.getMonth()]}</p>
+      </section>
+
+      <section className="rounded-3xl bg-surface border border-line p-5">
+        <p className="label">Costo de vida de {MESES_L[ref.getMonth()]}</p>
+        <p className="num display text-2xl font-bold mt-1">{money(costo)}</p>
+        <div className="mt-3 h-3 rounded-full overflow-hidden flex bg-surface2 border border-line">
+          <div style={{ width: costo ? `${(totYo / costo) * 100}%` : 0, background: "var(--exp)" }} />
+          <div style={{ width: costo ? `${(totEmp / costo) * 100}%` : 0, background: "var(--emp)" }} />
+        </div>
+        <div className="mt-2.5 flex justify-between text-sm gap-2 flex-wrap">
+          <span className="flex items-center gap-1.5"><span className="h-2.5 w-2.5 rounded-sm bg-exp" />Vos <span className="num font-semibold">{money(totYo)}</span></span>
+          <span className="flex items-center gap-1.5"><span className="h-2.5 w-2.5 rounded-sm bg-emp" />Empresa <span className="num font-semibold">{money(totEmp)}</span></span>
+        </div>
+      </section>
+
+      {porRubro.length > 0 && (
+        <section className="rounded-3xl bg-surface border border-line p-5 flex flex-col gap-2.5">
+          <p className="label">Por rubro</p>
+          {porRubro.map(([c, v]) => (
+            <div key={c} className="flex flex-col gap-1">
+              <div className="flex items-center gap-2 text-sm">
+                <span className="text-emp"><Ic n={EMP_ICON[c] || "Package"} size={15} /></span>
+                <span className="flex-1 font-medium">{c}</span>
+                <span className="num font-semibold">{money(v)}</span>
+              </div>
+              <div className="h-1.5 rounded-full bg-surface2 overflow-hidden ml-[23px]"><div className="h-full rounded-full bg-emp" style={{ width: `${(v / totEmp) * 100}%` }} /></div>
+            </div>
+          ))}
+        </section>
+      )}
+
+      {delMes.length === 0 ? (
+        <Vacio icon="Building2">
+          <p>No hay gastos de la empresa en este mes.</p>
+          <button onClick={() => abrir("empresa")} className="mt-3 px-4 py-2 rounded-full bg-empsoft text-emp font-semibold">Cargar gasto</button>
+        </Vacio>
+      ) : (
+        <section className="rounded-3xl bg-surface border border-line px-4 pt-3 pb-1">
+          <p className="label">Detalle</p>
+          <ul className="divide-y divide-line">
+            {delMes.map((e) => (
+              <li key={e.id} className="flex items-center gap-3 py-3">
+                <span className="h-10 w-10 grid place-items-center rounded-2xl shrink-0 bg-empsoft text-emp"><Ic n={EMP_ICON[e.cat] || "Package"} size={19} /></span>
+                <div className="min-w-0 flex-1">
+                  <p className="font-semibold truncate">{e.detalle}</p>
+                  <p className="text-xs text-muted truncate">{e.cat}</p>
+                </div>
+                <div className="text-right">
+                  <p className="num font-bold text-emp">{money(e.monto)}</p>
+                  <p className="num text-xs text-muted">{fmtDate(e.fecha)}</p>
+                </div>
+                <BorrarBtn onConfirm={() => borrar(e.id)} />
+              </li>
+            ))}
+          </ul>
+        </section>
+      )}
+    </div>
+  );
+}
+
+/* ---------- Cuotas: lo que viene y lo que falta cargar ---------- */
+const mesesEntre = (iso, d) => { const [y, m] = iso.split("-").map(Number); return (d.getFullYear() - y) * 12 + (d.getMonth() + 1 - m); };
+function cuotasActivas(movs, hoy) {
+  const g = {};
+  movs.filter((m) => m.tipo === "egreso" && m.cuota && m.tarjeta).forEach((m) => {
+    const k = `${m.desc.trim().toLowerCase()}|${m.tarjeta}|${m.cuota.de}`;
+    const prev = g[k];
+    if (!prev || m.fecha.slice(0, 7) > prev.fecha.slice(0, 7) || (m.fecha.slice(0, 7) === prev.fecha.slice(0, 7) && m.cuota.n > prev.cuota.n)) g[k] = m;
+  });
+  return Object.values(g).map((e) => {
+    const nHoy = e.cuota.n + mesesEntre(e.fecha, hoy);
+    return { ...e, nHoy, cargadaEsteMes: e.fecha.startsWith(monthKey(hoy)) };
+  }).filter((a) => a.nHoy <= a.cuota.de);
+}
+
+function FormCuotas({ pendientes, onLoad }) {
+  const [filas, setFilas] = useState(() => pendientes.map((p) => ({ ...p, sel: true, txt: fmtPlano.format(p.monto) })));
+  const [fecha, setFecha] = useState(toISO(new Date()));
+  const [err, setErr] = useState("");
+  const set = (id, patch) => setFilas((fs) => fs.map((f) => (f.id === id ? { ...f, ...patch } : f)));
+  const elegidas = filas.filter((f) => f.sel);
+  const cargar = () => {
+    if (!elegidas.length) return setErr("Marcá al menos una cuota");
+    const mala = elegidas.find((f) => !(parseMonto(f.txt) > 0));
+    if (mala) return setErr(`Revisá el monto de ${mala.desc}`);
+    onLoad(elegidas.map((f) => ({ id: uid(), tipo: "egreso", monto: parseMonto(f.txt), desc: f.desc, cat: f.cat, pago: "Tarjeta de Crédito",
+      tarjeta: f.tarjeta, cuota: { n: f.nHoy, de: f.cuota.de }, fijo: !!f.fijo, fecha })));
+  };
+  return (
+    <div className="flex flex-col gap-4">
+      <p className="text-sm text-muted">Son las cuotas que siguen de compras que ya cargaste. Corregí el monto si cambió y cargalas juntas.</p>
+      <ul className="flex flex-col gap-2">
+        {filas.map((f) => (
+          <li key={f.id} className={`rounded-2xl border p-3 flex items-center gap-3 ${f.sel ? "border-brand bg-brandsoft" : "border-line bg-surface2"}`}>
+            <button type="button" onClick={() => set(f.id, { sel: !f.sel })} aria-pressed={f.sel} aria-label={`Incluir ${f.desc}`}
+              className={`h-6 w-6 rounded-md border-2 grid place-items-center shrink-0 ${f.sel ? "bg-brand border-brand text-brandink" : "border-line bg-surface"}`}>
+              {f.sel && <Ic n="Check" size={14} />}
+            </button>
+            <div className="min-w-0 flex-1">
+              <p className="font-semibold text-sm truncate">{f.desc}</p>
+              <p className="text-[11px] text-muted truncate">{f.tarjeta} · cuota {pad(f.nHoy)}/{pad(f.cuota.de)}</p>
+            </div>
+            <input id={`cuota-${f.id}`} inputMode="decimal" aria-label={`Monto ${f.desc}`} value={f.txt} onChange={(e) => { set(f.id, { txt: e.target.value }); setErr(""); }}
+              className="num w-28 text-right bg-surface border border-line rounded-xl px-2.5 py-2 text-sm font-semibold outline-none focus:border-brand" />
+          </li>
+        ))}
+      </ul>
+      <Campo label="Fecha de carga" htmlFor="cuotas-fecha">
+        <input id="cuotas-fecha" type="date" className="field" value={fecha} onChange={(e) => setFecha(e.target.value)} />
+      </Campo>
+      {err && <p className="text-sm text-exp font-medium" role="alert">{err}</p>}
+      <button type="button" onClick={cargar} className="h-14 rounded-2xl font-bold text-white bg-exp flex items-center justify-center gap-2">
+        <Ic n="Check" /> Cargar {elegidas.length} {elegidas.length === 1 ? "cuota" : "cuotas"} · <span className="num">{money(sum(elegidas, (f) => parseMonto(f.txt)))}</span>
+      </button>
+    </div>
+  );
+}
+
+function CuotasQueVienen({ movs, tk }) {
+  const hoy = new Date();
+  const activas = cuotasActivas(movs, hoy);
+  const meses = [1, 2, 3, 4, 5, 6].map((j) => {
+    const d = new Date(hoy.getFullYear(), hoy.getMonth() + j, 1);
+    const fila = { mes: MESES[d.getMonth()], total: 0 };
+    TARJETAS.forEach((t) => { fila[t.id] = 0; });
+    activas.forEach((a) => { if (a.nHoy + j <= a.cuota.de) { fila[a.tarjeta] = (fila[a.tarjeta] || 0) + a.monto; fila.total += a.monto; } });
+    return fila;
+  });
+  const usadas = TARJETAS.filter((t) => meses.some((m) => m[t.id] > 0));
+  const ttStyle = { background: tk.surface, border: `1px solid ${tk.line}`, borderRadius: 12, color: tk.ink, fontSize: 13 };
+  const proximas = activas.filter((a) => a.nHoy < a.cuota.de).sort((a, b) => (b.cuota.de - b.nHoy) - (a.cuota.de - a.nHoy));
+
+  return (
+    <section className="rounded-3xl bg-surface border border-line p-5">
+      <h2 className="display text-lg font-bold">Cuotas que vienen</h2>
+      <p className="text-sm text-muted">Lo que ya tenés comprometido en las tarjetas los próximos meses</p>
+      {meses[0].total === 0 && proximas.length === 0 ? (
+        <div className="py-8 text-center text-sm text-muted"><Ic n="CalendarClock" size={28} className="mx-auto mb-2" />Cuando cargues compras en cuotas vas a ver acá lo que te queda por pagar.</div>
+      ) : (
+        <>
+          <div className="mt-3 flex items-baseline justify-between gap-2 rounded-2xl bg-surface2 border border-line px-4 py-3">
+            <span className="text-sm text-muted capitalize">{MESES_L[(hoy.getMonth() + 1) % 12]}</span>
+            <span className="num display text-xl font-bold">{money(meses[0].total)}</span>
+          </div>
+          <div className="flex gap-3 text-xs font-semibold mt-3 flex-wrap">
+            {usadas.map((t) => <span key={t.id} className="flex items-center gap-1.5"><span className="h-2.5 w-2.5 rounded-sm" style={{ background: t.color }} />{t.id}</span>)}
+          </div>
+          <div className="h-48 mt-2 -ml-2">
+            {BarChart && (
+              <ResponsiveContainer width="100%" height="100%">
+                <BarChart data={meses} barCategoryGap="28%">
+                  <CartesianGrid vertical={false} stroke={tk.line} strokeDasharray="3 3" />
+                  <XAxis dataKey="mes" tick={{ fill: tk.muted, fontSize: 12 }} axisLine={false} tickLine={false} />
+                  <YAxis tick={{ fill: tk.muted, fontSize: 11 }} axisLine={false} tickLine={false} width={44} tickFormatter={(v) => fmtCompact.format(v)} />
+                  <Tooltip formatter={(v) => money(v)} contentStyle={ttStyle} cursor={{ fill: tk.line, opacity: 0.35 }} labelStyle={{ color: tk.muted }} />
+                  {usadas.map((t, i) => <Bar key={t.id} dataKey={t.id} stackId="c" fill={t.color} radius={i === usadas.length - 1 ? [6, 6, 0, 0] : [0, 0, 0, 0]} isAnimationActive={false} />)}
+                </BarChart>
+              </ResponsiveContainer>
+            )}
+          </div>
+          {proximas.length > 0 && (
+            <ul className="mt-2 divide-y divide-line">
+              {proximas.map((a) => {
+                const fin = new Date(hoy.getFullYear(), hoy.getMonth() + (a.cuota.de - a.nHoy), 1);
+                return (
+                  <li key={a.id} className="py-2.5 flex items-center gap-3 text-sm">
+                    <span className="h-2.5 w-2.5 rounded-full shrink-0" style={{ background: (TARJETAS.find((t) => t.id === a.tarjeta) || {}).color }} />
+                    <div className="min-w-0 flex-1">
+                      <p className="font-semibold truncate">{a.desc}</p>
+                      <p className="text-xs text-muted">Quedan {a.cuota.de - a.nHoy} · termina en {MESES[fin.getMonth()]} {fin.getFullYear() !== hoy.getFullYear() ? fin.getFullYear() : ""}</p>
+                    </div>
+                    <span className="num font-semibold">{money(a.monto)}</span>
+                  </li>
+                );
+              })}
+            </ul>
+          )}
+          <p className="text-xs text-muted mt-3">Solo cuenta las cuotas que ya cargaste. No incluye consumos nuevos ni débitos automáticos como EDEA o Camuzzi.</p>
+        </>
+      )}
+    </section>
+  );
+}
+
+/* ---------- Deudas ---------- */
+function FormDeuda({ onSave }) {
+  const [tipo, setTipo] = useState("debo");
+  const [persona, setPersona] = useState("");
+  const [detalle, setDetalle] = useState("");
+  const [total, setTotal] = useState("");
+  const [pagado, setPagado] = useState("");
+  const [err, setErr] = useState("");
+  const guardar = (e) => {
+    e.preventDefault();
+    const t = parseMonto(total), p = pagado ? parseMonto(pagado) : 0;
+    if (!persona.trim()) return setErr(tipo === "debo" ? "Escribí a quién le debés" : "Escribí quién te debe");
+    if (!(t > 0)) return setErr("El monto total tiene que ser mayor a cero");
+    if (isNaN(p) || p < 0 || p > t) return setErr("Lo pagado tiene que estar entre 0 y el monto total");
+    onSave({ id: uid(), tipo, persona: persona.trim(), detalle: detalle.trim(), total: t, pagado: p, fecha: toISO(new Date()) });
+  };
+  return (
+    <form onSubmit={guardar} className="flex flex-col gap-4">
+      <Segmento value={tipo} onChange={setTipo} options={[
+        { value: "debo", label: "Yo debo", activeCls: "bg-debt text-white shadow-sm" },
+        { value: "meDeben", label: "Me deben", activeCls: "bg-inc text-white shadow-sm" },
+      ]} />
+      <Campo label={tipo === "debo" ? "Acreedor (a quién le debo)" : "Deudor (quién me debe)"} htmlFor="d-persona">
+        <input id="d-persona" className="field" placeholder="Nombre" value={persona} onChange={(e) => { setPersona(e.target.value); setErr(""); }} />
+      </Campo>
+      <Campo label="Detalle" htmlFor="d-detalle">
+        <input id="d-detalle" className="field" placeholder="Opcional. Ej: préstamo, compra compartida" value={detalle} onChange={(e) => setDetalle(e.target.value)} />
+      </Campo>
+      <div className="grid grid-cols-2 gap-3">
+        <Campo label="Monto total" htmlFor="d-total"><input id="d-total" inputMode="decimal" className="field num" placeholder="$ 0" value={total} onChange={(e) => { setTotal(e.target.value); setErr(""); }} /></Campo>
+        <Campo label="Ya pagado" htmlFor="d-pagado"><input id="d-pagado" inputMode="decimal" className="field num" placeholder="$ 0" value={pagado} onChange={(e) => { setPagado(e.target.value); setErr(""); }} /></Campo>
+      </div>
+      {err && <p className="text-sm text-exp font-medium" role="alert">{err}</p>}
+      <button type="submit" className="h-14 rounded-2xl font-bold bg-brand text-brandink flex items-center justify-center gap-2"><Ic n="Check" /> Guardar deuda</button>
+    </form>
+  );
+}
+
+function TarjetaDeuda({ d, onPago, onSaldar, onDelete }) {
+  const [abierto, setAbierto] = useState(false);
+  const [monto, setMonto] = useState("");
+  const [err, setErr] = useState("");
+  const falta = Math.max(0, d.total - d.pagado);
+  const saldada = falta === 0;
+  const debo = d.tipo === "debo";
+  const color = debo ? "var(--debt)" : "var(--inc)";
+  const registrar = () => {
+    const n = parseMonto(monto);
+    if (!(n > 0)) return setErr("Ingresá un monto válido");
+    if (n > falta) return setErr(`El máximo es ${money(falta)}`);
+    onPago(d.id, n); setMonto(""); setAbierto(false); setErr("");
+  };
+  return (
+    <li className={`rounded-3xl bg-surface border border-line p-4 flex flex-col gap-3 ${saldada ? "opacity-75" : ""}`}>
+      <div className="flex items-start gap-3">
+        <span className="h-10 w-10 grid place-items-center rounded-2xl shrink-0 font-bold display" style={{ background: debo ? "var(--debt-soft)" : "var(--inc-soft)", color }}>
+          {d.persona.slice(0, 1).toUpperCase()}
+        </span>
+        <div className="flex-1 min-w-0">
+          <p className="font-semibold truncate">{d.persona}</p>
+          {d.detalle && <p className="text-xs text-muted truncate">{d.detalle}</p>}
+        </div>
+        <span className={`text-xs font-bold px-2.5 py-1 rounded-full flex items-center gap-1 ${saldada ? "bg-incsoft text-inc" : "bg-debtsoft text-debt"}`}>
+          <Ic n={saldada ? "CheckCircle2" : "Clock"} size={13} />{saldada ? "Saldado" : "Pendiente"}
+        </span>
+      </div>
+      <Barra pct={(d.pagado / d.total) * 100} color={color} />
+      <div className="flex justify-between text-sm gap-2 flex-wrap">
+        <span className="text-muted">Pagado <span className="num font-semibold text-ink">{money(d.pagado)}</span> de <span className="num">{money(d.total)}</span></span>
+        {!saldada && <span className="num font-bold" style={{ color }}>Falta {money(falta)}</span>}
+      </div>
+      {abierto && (
+        <div className="flex flex-col gap-2">
+          <div className="flex gap-2">
+            <input id={`pago-${d.id}`} autoFocus inputMode="decimal" className="field num flex-1 min-w-0" placeholder="Monto del pago" value={monto} onChange={(e) => { setMonto(e.target.value); setErr(""); }} />
+            <button onClick={registrar} className="px-4 rounded-2xl bg-brand text-brandink font-semibold">Registrar</button>
+          </div>
+          {err && <p className="text-xs text-exp font-medium">{err}</p>}
+        </div>
+      )}
+      <div className="flex items-center gap-2 flex-wrap">
+        {!saldada && <button onClick={() => setAbierto(!abierto)} className="px-3.5 h-9 rounded-full bg-surface2 border border-line text-sm font-semibold flex items-center gap-1.5"><Ic n="Plus" size={15} />{debo ? "Registrar pago" : "Registrar cobro"}</button>}
+        {!saldada && <button onClick={() => onSaldar(d.id)} className="px-3.5 h-9 rounded-full bg-surface2 border border-line text-sm font-semibold flex items-center gap-1.5"><Ic n="Check" size={15} />Saldar</button>}
+        <span className="flex-1" />
+        <BorrarBtn onConfirm={() => onDelete(d.id)} />
+      </div>
+    </li>
+  );
+}
+
+function Deudas({ data, setData, abrir }) {
+  const [vista, setVista] = useState("debo");
+  const lista = data.deudas.filter((d) => d.tipo === vista).sort((a, b) => (a.pagado >= a.total) - (b.pagado >= b.total));
+  const pend = (t) => sum(data.deudas.filter((d) => d.tipo === t), (d) => Math.max(0, d.total - d.pagado));
+  const upd = (fn) => setData((s) => ({ ...s, deudas: fn(s.deudas) }));
+  return (
+    <div className="flex flex-col gap-4">
+      <div className="grid grid-cols-2 gap-3">
+        <div className="rounded-2xl bg-debtsoft p-4 min-w-0"><p className="label" style={{ color: "var(--debt)" }}>Debo</p><p className="num display text-xl font-bold mt-1.5 break-words">{money(pend("debo"))}</p></div>
+        <div className="rounded-2xl bg-incsoft p-4 min-w-0"><p className="label" style={{ color: "var(--inc)" }}>Me deben</p><p className="num display text-xl font-bold mt-1.5 break-words">{money(pend("meDeben"))}</p></div>
+      </div>
+      <Segmento value={vista} onChange={setVista} options={[
+        { value: "debo", label: "Lo que debo", activeCls: "bg-surface text-debt shadow-sm" },
+        { value: "meDeben", label: "Lo que me deben", activeCls: "bg-surface text-inc shadow-sm" },
+      ]} />
+      {lista.length === 0 ? (
+        <Vacio icon="HandCoins">{vista === "debo" ? "No tenés deudas cargadas." : "No hay nadie que te deba plata cargado. Lo de Cousteau va en su propia sección."}</Vacio>
+      ) : (
+        <ul className="flex flex-col gap-3">
+          {lista.map((d) => (
+            <TarjetaDeuda key={d.id} d={d}
+              onPago={(id, n) => upd((ds) => ds.map((x) => (x.id === id ? { ...x, pagado: Math.min(x.total, x.pagado + n) } : x)))}
+              onSaldar={(id) => upd((ds) => ds.map((x) => (x.id === id ? { ...x, pagado: x.total } : x)))}
+              onDelete={(id) => upd((ds) => ds.filter((x) => x.id !== id))} />
+          ))}
+        </ul>
+      )}
+      <button onClick={() => abrir("deuda")} className="h-12 rounded-2xl border-2 border-dashed border-line text-muted font-semibold flex items-center justify-center gap-2"><Ic n="Plus" size={18} />Nueva deuda</button>
+    </div>
+  );
+}
+
+/* ---------- Ahorros ---------- */
+function FormMeta({ onSave }) {
+  const [nombre, setNombre] = useState("");
+  const [objetivo, setObjetivo] = useState("");
+  const [inicial, setInicial] = useState("");
+  const [limite, setLimite] = useState("");
+  const [err, setErr] = useState("");
+  const sugerencias = ["Fondo de emergencia", "Vacaciones", "Auto", "Para Vicente"];
+  const guardar = (e) => {
+    e.preventDefault();
+    const o = parseMonto(objetivo), i = inicial ? parseMonto(inicial) : 0;
+    if (!nombre.trim()) return setErr("Ponele un nombre a la meta");
+    if (!(o > 0)) return setErr("El monto objetivo tiene que ser mayor a cero");
+    if (isNaN(i) || i < 0) return setErr("El monto inicial no es válido");
+    onSave({ id: uid(), nombre: nombre.trim(), objetivo: o, actual: i, limite });
+  };
+  return (
+    <form onSubmit={guardar} className="flex flex-col gap-4">
+      <Campo label="Nombre de la meta" htmlFor="m-nombre">
+        <input id="m-nombre" className="field" placeholder="Ej: Vacaciones" value={nombre} onChange={(e) => { setNombre(e.target.value); setErr(""); }} />
+        <div className="flex flex-wrap gap-1.5 mt-1">
+          {sugerencias.map((s) => <button type="button" key={s} onClick={() => setNombre(s)} className="text-xs px-2.5 py-1.5 rounded-full bg-surface2 border border-line">{s}</button>)}
+        </div>
+      </Campo>
+      <div className="grid grid-cols-2 gap-3">
+        <Campo label="Monto objetivo" htmlFor="m-obj"><input id="m-obj" inputMode="decimal" className="field num" placeholder="$ 0" value={objetivo} onChange={(e) => { setObjetivo(e.target.value); setErr(""); }} /></Campo>
+        <Campo label="Ya tengo" htmlFor="m-ini"><input id="m-ini" inputMode="decimal" className="field num" placeholder="$ 0" value={inicial} onChange={(e) => setInicial(e.target.value)} /></Campo>
+      </div>
+      <Campo label="Fecha límite" htmlFor="m-lim" hint="Opcional. Te calculamos cuánto separar por mes.">
+        <input id="m-lim" type="date" className="field" value={limite} onChange={(e) => setLimite(e.target.value)} />
+      </Campo>
+      {err && <p className="text-sm text-exp font-medium" role="alert">{err}</p>}
+      <button type="submit" className="h-14 rounded-2xl font-bold bg-inc text-white flex items-center justify-center gap-2"><Ic n="Target" /> Crear meta</button>
+    </form>
+  );
+}
+
+function TarjetaMeta({ m, onMover, onDelete }) {
+  const [monto, setMonto] = useState("");
+  const [err, setErr] = useState("");
+  const pct = (m.actual / m.objetivo) * 100;
+  const falta = Math.max(0, m.objetivo - m.actual);
+  const lista = falta === 0;
+  let porMes = null;
+  if (m.limite && !lista) {
+    const hoy = new Date(), l = new Date(m.limite + "T12:00:00");
+    const meses = Math.max(1, (l.getFullYear() - hoy.getFullYear()) * 12 + (l.getMonth() - hoy.getMonth()));
+    porMes = l > hoy ? { meses, monto: falta / meses } : { vencida: true };
+  }
+  const mover = (signo, valor) => {
+    const n = valor ?? parseMonto(monto);
+    if (!(n > 0)) return setErr("Ingresá un monto válido");
+    if (signo < 0 && n > m.actual) return setErr(`Solo hay ${money(m.actual)} en esta meta`);
+    onMover(m.id, signo * n); setMonto(""); setErr("");
+  };
+  return (
+    <li className="rounded-3xl bg-surface border border-line p-5 flex flex-col gap-3">
+      <div className="flex items-start gap-3">
+        <span className="h-11 w-11 grid place-items-center rounded-2xl bg-incsoft text-inc shrink-0"><Ic n={lista ? "Trophy" : "PiggyBank"} size={22} /></span>
+        <div className="flex-1 min-w-0">
+          <p className="font-semibold">{m.nombre}</p>
+          <p className="text-xs text-muted">{m.limite ? `Hasta el ${fmtDate(m.limite)}` : "Sin fecha límite"}</p>
+        </div>
+        <p className="num display text-2xl font-bold text-inc">{Math.min(100, Math.round(pct))}%</p>
+      </div>
+      <Barra pct={pct} />
+      <div className="flex justify-between text-sm gap-2 flex-wrap">
+        <span><span className="num font-bold">{money(m.actual)}</span><span className="text-muted"> de <span className="num">{money(m.objetivo)}</span></span></span>
+        {lista ? <span className="font-bold text-inc">¡Meta cumplida!</span> : <span className="num text-muted">Faltan {money(falta)}</span>}
+      </div>
+      {porMes && (
+        <p className="text-xs rounded-xl bg-surface2 px-3 py-2 text-muted">
+          {porMes.vencida ? "La fecha límite ya pasó." :
+            <>Separando <span className="num font-semibold text-ink">{money(porMes.monto)}</span> por mes llegás en {porMes.meses} {porMes.meses === 1 ? "mes" : "meses"}.</>}
+        </p>
+      )}
+      <div className="flex flex-col gap-2 pt-1">
+        <div className="flex gap-1.5">
+          {[10000, 50000, 100000].map((v) => (
+            <button key={v} onClick={() => mover(1, v)} className="flex-1 h-9 rounded-full bg-incsoft text-inc text-sm font-semibold num">+{fmtCompact.format(v)}</button>
+          ))}
+        </div>
+        <div className="flex gap-2">
+          <input id={`meta-${m.id}`} inputMode="decimal" className="field num flex-1 min-w-0" placeholder="Otro monto" value={monto} onChange={(e) => { setMonto(e.target.value); setErr(""); }} />
+          <button onClick={() => mover(1)} className="px-4 rounded-2xl bg-inc text-white font-semibold">Agregar</button>
+          <button onClick={() => mover(-1)} className="px-3 rounded-2xl bg-surface2 border border-line font-semibold text-sm">Retirar</button>
+        </div>
+        {err && <p className="text-xs text-exp font-medium">{err}</p>}
+      </div>
+      <div className="flex justify-end -mb-2"><BorrarBtn onConfirm={() => onDelete(m.id)} /></div>
+    </li>
+  );
+}
+
+function Ahorros({ data, setData, abrir }) {
+  const total = sum(data.metas, (m) => m.actual);
+  const obj = sum(data.metas, (m) => m.objetivo);
+  const upd = (fn) => setData((s) => ({ ...s, metas: fn(s.metas) }));
+  return (
+    <div className="flex flex-col gap-4">
+      <section className="rounded-3xl bg-incsoft p-5">
+        <p className="label" style={{ color: "var(--inc)" }}>Ahorrado en metas</p>
+        <p className="num display text-3xl font-bold mt-1">{money(total)}</p>
+        <div className="mt-3"><Barra pct={obj ? (total / obj) * 100 : 0} /></div>
+        <p className="text-sm text-muted mt-2">{obj ? `${Math.round((total / obj) * 100)}% del total de tus ${data.metas.length} metas (${money(obj)})` : "Creá tu primera meta para empezar"}</p>
+      </section>
+      <ul className="flex flex-col gap-3">
+        {data.metas.map((m) => (
+          <TarjetaMeta key={m.id} m={m}
+            onMover={(id, n) => upd((ms) => ms.map((x) => (x.id === id ? { ...x, actual: Math.max(0, x.actual + n) } : x)))}
+            onDelete={(id) => upd((ms) => ms.filter((x) => x.id !== id))} />
+        ))}
+      </ul>
+      <button onClick={() => abrir("meta")} className="h-12 rounded-2xl border-2 border-dashed border-line text-muted font-semibold flex items-center justify-center gap-2"><Ic n="Plus" size={18} />Nueva meta de ahorro</button>
+    </div>
+  );
+}
+
+/* ---------- Ajustes: categorías y medios de pago ---------- */
+function EditorItem({ inicial, iconos, conColor, colores = COLORES_CAT, colorInicial, iconoFijo, onGuardar, onCancelar, existe }) {
+  const [nombre, setNombre] = useState(inicial ? inicial.id : "");
+  const [icon, setIcon] = useState(inicial ? inicial.icon : iconos ? iconos[0] : iconoFijo);
+  const [color, setColor] = useState(inicial && inicial.color ? inicial.color : colorInicial || colores[0]);
+  const [err, setErr] = useState("");
+  const guardar = () => {
+    const n = nombre.trim();
+    if (!n) return setErr("Escribí un nombre");
+    if (existe(n)) return setErr("Ya hay uno con ese nombre");
+    onGuardar({ id: n, icon, ...(conColor ? { color } : {}) });
+  };
+  const tinte = conColor ? color : "var(--brand)";
+  return (
+    <div className="rounded-2xl border border-brand bg-surface p-3.5 flex flex-col gap-3">
+      <input id={`ed-nombre-${inicial ? inicial.key : "nuevo"}`} autoFocus className="field" placeholder="Nombre" value={nombre}
+        onChange={(e) => { setNombre(e.target.value); setErr(""); }} onKeyDown={(e) => e.key === "Enter" && guardar()} />
+      {iconos && <div>
+        <p className="label mb-1.5">Ícono</p>
+        <div className="grid grid-cols-8 gap-1.5">
+          {iconos.map((n) => (
+            <button type="button" key={n} onClick={() => setIcon(n)} aria-label={`Ícono ${n}`} aria-pressed={icon === n}
+              className={`h-9 rounded-xl grid place-items-center border ${icon === n ? "border-transparent" : "border-line bg-surface2 text-muted"}`}
+              style={icon === n ? { background: conColor ? color + "26" : "var(--brand-soft)", color: tinte, boxShadow: `inset 0 0 0 2px ${tinte}` } : {}}>
+              <Ic n={n} size={17} />
+            </button>
+          ))}
+        </div>
+      </div>}
+      {conColor && (
+        <div>
+          <p className="label mb-1.5">Color</p>
+          <div className="flex flex-wrap gap-2">
+            {colores.map((c) => (
+              <button type="button" key={c} onClick={() => setColor(c)} aria-label={`Color ${c}`} aria-pressed={color === c}
+                className="h-8 w-8 rounded-full" style={{ background: c, boxShadow: color === c ? `0 0 0 2px var(--surface), 0 0 0 4px ${c}` : "none" }} />
+            ))}
+          </div>
+        </div>
+      )}
+      {err && <p className="text-sm text-exp font-medium" role="alert">{err}</p>}
+      <div className="flex gap-2">
+        <button type="button" onClick={guardar} className="flex-1 h-11 rounded-xl bg-brand text-brandink font-semibold">Guardar</button>
+        <button type="button" onClick={onCancelar} className="px-4 h-11 rounded-xl bg-surface2 border border-line font-semibold">Cancelar</button>
+      </div>
+    </div>
+  );
+}
+
+function ListaEditable({ items, iconos, conColor, colores = COLORES_CAT, iconoFijo, protegido, minimo = 1, onCambiar, onRenombrar, nuevoLabel }) {
+  const [editando, setEditando] = useState(null);
+  const existe = (n, key) => items.some((x) => x.key !== key && x.id.trim().toLowerCase() === n.toLowerCase());
+  const libre = colores.find((c) => !items.some((x) => x.color === c)) || colores[0];
+  return (
+    <div className="flex flex-col gap-2">
+      <ul className="flex flex-col gap-2">
+        {items.map((it) => editando === it.key ? (
+          <li key={it.key}>
+            <EditorItem inicial={it} iconos={iconos} conColor={conColor} colores={colores} iconoFijo={iconoFijo} existe={(n) => existe(n, it.key)} onCancelar={() => setEditando(null)}
+              onGuardar={(v) => { onCambiar(items.map((x) => (x.key === it.key ? { ...x, ...v } : x))); if (v.id !== it.id) onRenombrar(it.id, v.id); setEditando(null); }} />
+          </li>
+        ) : (
+          <li key={it.key} className="flex items-center gap-3 rounded-2xl bg-surface2 border border-line px-3 py-2">
+            <span className="h-9 w-9 grid place-items-center rounded-xl shrink-0" style={conColor ? { background: it.color + "22", color: it.color } : { background: "var(--brand-soft)", color: "var(--brand)" }}><Ic n={it.icon} size={18} /></span>
+            <span className="flex-1 min-w-0 font-medium truncate">{it.id}</span>
+            {protegido && protegido(it) ? (
+              <span className="text-[11px] text-muted text-right leading-tight">Fijo: activa<br />tarjetas y cuotas</span>
+            ) : (
+              <>
+                <button type="button" onClick={() => setEditando(it.key)} className="h-9 w-9 grid place-items-center rounded-full text-muted hover:bg-surface" aria-label={`Editar ${it.id}`}><Ic n="Pencil" size={16} /></button>
+                {items.length > minimo && <BorrarBtn onConfirm={() => onCambiar(items.filter((x) => x.key !== it.key))} />}
+              </>
+            )}
+          </li>
+        ))}
+      </ul>
+      {editando === "nuevo" ? (
+        <EditorItem iconos={iconos} conColor={conColor} colores={colores} colorInicial={libre} iconoFijo={iconoFijo} existe={(n) => existe(n)} onCancelar={() => setEditando(null)}
+          onGuardar={(v) => { onCambiar([...items, { ...v, key: "k" + uid() }]); setEditando(null); }} />
+      ) : (
+        <button type="button" onClick={() => setEditando("nuevo")} className="h-11 rounded-xl border-2 border-dashed border-line text-muted font-semibold text-sm flex items-center justify-center gap-2"><Ic n="Plus" size={16} />{nuevoLabel}</button>
+      )}
+    </div>
+  );
+}
+
+function Ajustes({ data, setData, renombrar, ir, cfgOn, syncTxt }) {
+  const [seccion, setSeccion] = useState(null);
+  const cats = data.categorias && data.categorias.length ? data.categorias : categoriasBase();
+  const meds = data.medios && data.medios.length ? data.medios : mediosBase();
+  const tars = data.tarjetas && data.tarjetas.length ? data.tarjetas : tarjetasBase();
+  if (seccion === "tarjetas") return (
+    <div className="flex flex-col gap-4">
+      <button type="button" onClick={() => setSeccion(null)} className="self-start text-sm font-semibold text-brand flex items-center gap-1"><Ic n="ChevronLeft" size={16} />Ajustes</button>
+      <p className="text-sm text-muted">Son las tarjetas de crédito que aparecen al pagar con tarjeta. Si cambiás un nombre, se actualiza en todo lo que ya cargaste. Si cerrás una cuenta y la borrás, los consumos viejos la conservan.</p>
+      <ListaEditable items={tars} conColor colores={COLORES_TARJETA} iconoFijo="CreditCard" nuevoLabel="Agregar tarjeta"
+        onCambiar={(lista) => setData((s) => ({ ...s, tarjetas: lista.map((t) => ({ ...t, icon: "CreditCard" })) }))} onRenombrar={(a, b) => renombrar("tarjeta", a, b)} />
+    </div>
+  );
+  const setCats = (tipo) => (lista) => setData((s) => ({ ...s, categorias: [...cats.filter((c) => c.tipo !== tipo), ...lista.map((c) => ({ ...c, tipo }))] }));
+  if (seccion === "medios") return (
+    <div className="flex flex-col gap-4">
+      <button type="button" onClick={() => setSeccion(null)} className="self-start text-sm font-semibold text-brand flex items-center gap-1"><Ic n="ChevronLeft" size={16} />Ajustes</button>
+      <p className="text-sm text-muted">Los que agregues aparecen al cargar movimientos, gastos fijos y aportes a Cousteau. Si cambiás un nombre, se actualiza en todo lo que ya cargaste.</p>
+      <ListaEditable items={meds} iconos={ICONOS_MEDIO} protegido={(m) => m.id === CREDITO} nuevoLabel="Agregar medio de pago"
+        onCambiar={(lista) => setData((s) => ({ ...s, medios: lista }))} onRenombrar={(a, b) => renombrar("medio", a, b)} />
+    </div>
+  );
+  if (seccion === "categorias") return (
+    <div className="flex flex-col gap-4">
+      <button type="button" onClick={() => setSeccion(null)} className="self-start text-sm font-semibold text-brand flex items-center gap-1"><Ic n="ChevronLeft" size={16} />Ajustes</button>
+      <p className="text-sm text-muted">Si cambiás un nombre, se actualiza en todos tus movimientos. Si borrás una, lo que ya cargaste la conserva.</p>
+      <p className="label">Categorías de egresos</p>
+      <ListaEditable items={cats.filter((c) => c.tipo === "egreso")} iconos={ICONOS_CAT} conColor nuevoLabel="Agregar categoría de egreso"
+        onCambiar={setCats("egreso")} onRenombrar={(a, b) => renombrar("cat", a, b)} />
+      <p className="label mt-2">Categorías de ingresos</p>
+      <ListaEditable items={cats.filter((c) => c.tipo === "ingreso")} iconos={ICONOS_CAT} conColor nuevoLabel="Agregar categoría de ingreso"
+        onCambiar={setCats("ingreso")} onRenombrar={(a, b) => renombrar("cat", a, b)} />
+    </div>
+  );
+  const Fila = ({ icon, titulo, sub, onClick }) => (
+    <button type="button" onClick={onClick} className="flex items-center gap-3 rounded-2xl bg-surface2 border border-line p-3.5 text-left">
+      <span className="h-10 w-10 grid place-items-center rounded-xl bg-brandsoft text-brand shrink-0"><Ic n={icon} size={19} /></span>
+      <div className="flex-1 min-w-0"><p className="font-semibold">{titulo}</p><p className="text-xs text-muted truncate">{sub}</p></div>
+      <Ic n="ChevronRight" className="text-muted" />
+    </button>
+  );
+  return (
+    <div className="flex flex-col gap-2.5">
+      <Fila icon="Wallet" titulo="Medios de pago" sub={meds.map((m) => m.id).join(", ")} onClick={() => setSeccion("medios")} />
+      <Fila icon="CreditCard" titulo="Tarjetas de crédito" sub={tars.map((t) => t.id).join(", ")} onClick={() => setSeccion("tarjetas")} />
+      <Fila icon="Tags" titulo="Categorías" sub={`${cats.filter((c) => c.tipo === "egreso").length} de egresos, ${cats.filter((c) => c.tipo === "ingreso").length} de ingresos`} onClick={() => setSeccion("categorias")} />
+      {!EN_ARTIFACT && <Fila icon={cfgOn ? "Cloud" : "CloudOff"} titulo="Google Sheets" sub={syncTxt} onClick={() => ir("sheets")} />}
+    </div>
+  );
+}
+
+/* ---------- App ---------- */
+const TABS = [
+  { id: "inicio", label: "Inicio", icon: "LayoutDashboard", titulo: "Mis finanzas" },
+  { id: "historial", label: "Historial", icon: "ArrowLeftRight", titulo: "Movimientos" },
+  { id: "deudas", label: "Deudas", icon: "HandCoins", titulo: "Deudas" },
+  { id: "ahorros", label: "Ahorros", icon: "PiggyBank", titulo: "Ahorros" },
+  { id: "cousteau", label: "Cousteau", icon: "Store", titulo: "Plata en Cousteau" },
+  { id: "empresa", label: "Empresa", icon: "Building2", titulo: "Gastos de la empresa" },
+];
+const TAB_COLOR = { cousteau: ["text-cou", "bg-cousoft"], empresa: ["text-emp", "bg-empsoft"] };
+
+function App() {
+  const [data, setData] = useState(cargar);
+  aplicarCatalogos(data);
+  const renombrar = (tipo, de, a) => setData((s) => tipo === "tarjeta" ? ({
+    ...s,
+    movs: s.movs.map((m) => (m.tarjeta === de ? { ...m, tarjeta: a } : m)),
+    fijos: s.fijos.map((f) => (f.tarjeta === de ? { ...f, tarjeta: a } : f)),
+  }) : tipo === "medio" ? ({
+    ...s,
+    movs: s.movs.map((m) => (m.pago === de ? { ...m, pago: a } : m)),
+    fijos: s.fijos.map((f) => (f.pago === de ? { ...f, pago: a } : f)),
+    cousteau: s.cousteau.map((c) => (c.medio === de ? { ...c, medio: a } : c)),
+  }) : ({
+    ...s,
+    movs: s.movs.map((m) => (m.cat === de ? { ...m, cat: a } : m)),
+    fijos: s.fijos.map((f) => (f.cat === de ? { ...f, cat: a } : f)),
+  }));
+  const agregarCat = (tipo, nombre) => {
+    const usados = (data.categorias || []).length;
+    setData((s) => ({ ...s, categorias: [...(s.categorias && s.categorias.length ? s.categorias : categoriasBase()), { key: "k" + uid(), id: nombre, tipo, icon: tipo === "ingreso" ? "PlusCircle" : "Package", color: COLORES_CAT[usados % COLORES_CAT.length] }] }));
+  };
+  const agregarMedio = (nombre) => setData((s) => ({ ...s, medios: [...(s.medios && s.medios.length ? s.medios : mediosBase()), { key: "k" + uid(), id: nombre, icon: "Wallet" }] }));
+  const [tab, setTab] = useState(() => { const h = location.hash.slice(1); return TABS.some((t) => t.id === h) ? h : "inicio"; });
+  const [sheet, setSheet] = useState(null);
+  const [toast, setToast] = useState("");
+  const [editando, setEditando] = useState(null);
+  const borrarMov = (id) => { setData((s) => ({ ...s, movs: s.movs.filter((m) => m.id !== id) })); setToast("Movimiento eliminado"); };
+
+  /* sincronización: estados posibles local | cargando | guardando | ok | error */
+  const [cfg, setCfg] = useState(() => (EN_ARTIFACT ? null : leerCfg()));
+  const [sync, setSync] = useState(() => (cfg ? "cargando" : "local"));
+  const [syncErr, setSyncErr] = useState("");
+  const [inicial, setInicial] = useState(!!cfg);
+  const dataRef = useRef(data);
+  const cfgRef = useRef(cfg);
+  const listo = useRef(!cfg);
+  const saltar = useRef(false);
+  const timer = useRef(null);
+  dataRef.current = data;
+  cfgRef.current = cfg;
+
+  const subir = async (c = cfgRef.current) => {
+    if (!c) return;
+    setSync("guardando");
+    try {
+      await llamarSheets(c, { datos: aSheets(dataRef.current), encabezados: ENCABEZADOS });
+      if (!timer.current) marcarPendiente(false);
+      setSync("ok"); setSyncErr("");
+    } catch (e) { setSync("error"); setSyncErr(mensajeError(e)); }
+  };
+  const bajar = async (c = cfgRef.current) => {
+    if (!c) return;
+    setSync("cargando");
+    try {
+      const j = await llamarSheets(c);
+      const srv = deSheets(j.datos || {});
+      const { medios: srvMedios, categorias: srvCats, tarjetas: srvTarjetas, ...registros } = srv;
+      const vacioSrv = Object.values(registros).every((a) => a.length === 0);
+      listo.current = true;
+      if (vacioSrv) { await subir(c); }
+      else {
+        saltar.current = true;
+        setData((s) => ({ ...s, ...registros, medios: srvMedios.length ? srvMedios : s.medios, categorias: srvCats.length ? srvCats : s.categorias, tarjetas: srvTarjetas.length ? srvTarjetas : s.tarjetas }));
+        setSync("ok"); setSyncErr("");
+      }
+    } catch (e) { listo.current = true; setSync("error"); setSyncErr(mensajeError(e)); }
+    setInicial(false);
+  };
+
+  useEffect(() => {
+    if (!cfg) return;
+    if (hayPendiente()) { listo.current = true; setInicial(false); subir(cfg); } else bajar(cfg);
+    const alVolver = () => {
+      if (document.visibilityState !== "visible" || !cfgRef.current) return;
+      if (hayPendiente()) subir(); else bajar();
+    };
+    document.addEventListener("visibilitychange", alVolver);
+    return () => document.removeEventListener("visibilitychange", alVolver);
+  }, [cfg]);
+
+  useEffect(() => {
+    try { localStorage.setItem(KEY, JSON.stringify(data)); } catch (e) {}
+    if (!cfgRef.current) return;
+    if (saltar.current) { saltar.current = false; return; }
+    if (!listo.current) return;
+    marcarPendiente(true);
+    clearTimeout(timer.current);
+    timer.current = setTimeout(() => { timer.current = null; subir(); }, 1200);
+  }, [data]);
+
+  const conectar = (c) => { guardarCfg(c); listo.current = false; setSheet(null); setCfg(c); setToast("Conectado con Google Sheets"); };
+  const desconectar = () => { guardarCfg(null); marcarPendiente(false); setCfg(null); setSync("local"); setSheet(null); setToast("Desconectado de Sheets"); };
+  const SYNC_UI = {
+    local: ["Solo en este teléfono", "CloudOff", "text-muted"],
+    cargando: ["Actualizando…", "RefreshCw", "text-muted"],
+    guardando: ["Guardando…", "RefreshCw", "text-muted"],
+    ok: ["Guardado en Sheets", "Cloud", "text-inc"],
+    error: ["Sin conexión", "CloudOff", "text-exp"],
+  };
+
+  useEffect(() => { if (toast) { const t = setTimeout(() => setToast(""), 2200); return () => clearTimeout(t); } }, [toast]);
+  const ir = (t) => { setTab(t); window.scrollTo({ top: 0 }); };
+  const cerrar = () => setSheet(null);
+
+  const hoy = new Date();
+  const actual = TABS.find((t) => t.id === tab);
+  const pendCousteau = sum(data.cousteau.filter((c) => c.tipo === "aporte")) - sum(data.cousteau.filter((c) => c.tipo === "devolucion"));
+
+  return (
+    <div className="mx-auto max-w-md min-h-full px-4" style={{ paddingBottom: "calc(150px + env(safe-area-inset-bottom, 0px))" }}>
+      <header className="pt-5 pb-4 flex items-start justify-between gap-3">
+        <div className="min-w-0">
+          <p className="text-sm text-muted capitalize">{DIAS[hoy.getDay()]} {hoy.getDate()} de {MESES_L[hoy.getMonth()]}</p>
+          <h1 className="display text-[1.75rem] font-bold leading-tight">{actual.titulo}</h1>
+        </div>
+        <div className="mt-1 flex items-center gap-2 shrink-0">
+          {!EN_ARTIFACT && (
+            <button onClick={() => setSheet("sheets")} className="flex items-center gap-1.5 h-9 pl-2.5 pr-3 rounded-full bg-surface border border-line text-xs font-semibold" aria-label={`Google Sheets: ${SYNC_UI[sync][0]}`}>
+              <span className={SYNC_UI[sync][2]}><Ic n={SYNC_UI[sync][1]} size={15} /></span>
+              <span className="text-muted max-[360px]:hidden">{SYNC_UI[sync][0]}</span>
+            </button>
+          )}
+          <button onClick={() => setSheet("ajustes")} className="h-9 w-9 grid place-items-center rounded-full bg-surface border border-line text-muted" aria-label="Ajustes"><Ic n="Settings" size={17} /></button>
+        </div>
+      </header>
+      {sync === "error" && syncErr && (
+        <button onClick={() => subir()} className="mb-4 w-full rounded-2xl bg-expsoft text-exp text-sm px-4 py-3 text-left flex items-center gap-2">
+          <Ic n="AlertTriangle" size={16} />
+          <span className="flex-1">{syncErr} Tus cambios quedan en el teléfono. Tocá para reintentar.</span>
+        </button>
+      )}
+      {cfg === null && !EN_ARTIFACT && (data.movs.length > 0 || data.cousteau.length > 0) && (
+        <button onClick={() => setSheet("sheets")} className="mb-4 w-full rounded-2xl border border-dashed border-line text-sm px-4 py-3 text-left flex items-center gap-2 text-muted">
+          <Ic n="CloudOff" size={16} /><span className="flex-1">Tus datos están solo en este teléfono. Conectá Google Sheets para guardarlos.</span><Ic n="ChevronRight" size={16} />
+        </button>
+      )}
+      {inicial && (
+        <div className="fixed inset-0 z-[70] bg-bg grid place-items-center">
+          <div className="text-center text-muted"><span className="inline-block animate-spin"><Ic n="RefreshCw" size={28} /></span><p className="mt-3">Trayendo tus datos de Sheets…</p></div>
+        </div>
+      )}
+
+      <main>
+        {tab === "inicio" && <Dashboard data={data} ir={ir} abrir={setSheet} onEdit={setEditando} onDelete={borrarMov} />}
+        {tab === "historial" && <Historial data={data} abrir={setSheet} onEdit={setEditando} onDelete={borrarMov} />}
+        {tab === "empresa" && <Empresa data={data} setData={setData} abrir={setSheet} />}
+        {tab === "deudas" && <Deudas data={data} setData={setData} abrir={setSheet} />}
+        {tab === "ahorros" && <Ahorros data={data} setData={setData} abrir={setSheet} />}
+        {tab === "cousteau" && <Cousteau data={data} setData={setData} abrir={setSheet} />}
+      </main>
+
+      <button onClick={() => setSheet(tab === "empresa" ? "empresa" : tab === "cousteau" ? "cou-aporte" : "mov")}
+        aria-label={tab === "empresa" ? "Cargar gasto de la empresa" : tab === "cousteau" ? "Cargar aporte a Cousteau" : "Cargar movimiento"}
+        className="fixed z-40 h-14 w-14 rounded-2xl bg-brand text-brandink grid place-items-center shadow-lg active:scale-95 transition"
+        style={{ right: "max(16px, calc(50vw - 14rem + 16px))", bottom: "calc(84px + env(safe-area-inset-bottom, 0px))" }}>
+        <Ic n="Plus" size={28} />
+      </button>
+
+      <nav className="fixed bottom-0 inset-x-0 z-40 bg-surface border-t border-line" style={{ paddingBottom: "env(safe-area-inset-bottom, 0px)" }}>
+        <div className="mx-auto max-w-md grid grid-cols-6 px-1 pt-1.5 pb-2">
+          {TABS.map((t) => {
+            const on = tab === t.id;
+            const [txt, bgc] = TAB_COLOR[t.id] || ["text-brand", "bg-brandsoft"];
+            return (
+              <button key={t.id} onClick={() => ir(t.id)} aria-current={on ? "page" : undefined}
+                className={`flex flex-col items-center gap-0.5 py-1 text-[10.5px] font-semibold min-w-0 ${on ? txt : "text-muted"}`}>
+                <span className={`h-8 w-11 grid place-items-center rounded-full transition ${on ? bgc : ""}`}><Ic n={t.icon} size={20} /></span>
+                <span className="truncate max-w-full">{t.label}</span>
+              </button>
+            );
+          })}
+        </div>
+      </nav>
+
+      {toast && (
+        <div className="fixed left-1/2 -translate-x-1/2 z-[60] px-4 py-2.5 rounded-full bg-ink text-bg text-sm font-semibold shadow-lg flex items-center gap-2 whitespace-nowrap"
+          style={{ bottom: "calc(150px + env(safe-area-inset-bottom, 0px))" }} role="status">
+          <Ic n="CheckCircle2" size={16} />{toast}
+        </div>
+      )}
+
+      {sheet === "mov" && (
+        <Sheet title="Nuevo movimiento" onClose={cerrar}>
+          <FormMovimiento onAgregarCat={agregarCat} onAgregarMedio={agregarMedio} onSave={(m) => { setData((s) => ({ ...s, movs: [...s.movs, m] })); cerrar(); setToast(m.tipo === "ingreso" ? "Ingreso guardado" : "Egreso guardado"); }} />
+        </Sheet>
+      )}
+      {editando && (
+        <Sheet title="Editar movimiento" onClose={() => setEditando(null)}>
+          <FormMovimiento inicial={editando} onAgregarCat={agregarCat} onAgregarMedio={agregarMedio} onSave={(m) => { setData((s) => ({ ...s, movs: s.movs.map((x) => (x.id === m.id ? m : x)) })); setEditando(null); setToast("Cambios guardados"); }} />
+          <button type="button" onClick={() => { borrarMov(editando.id); setEditando(null); }}
+            className="mt-3 w-full h-12 rounded-2xl bg-expsoft text-exp font-semibold flex items-center justify-center gap-2"><Ic n="Trash2" size={17} />Eliminar movimiento</button>
+        </Sheet>
+      )}
+      {sheet === "empresa" && (
+        <Sheet title="Gasto de la empresa" onClose={cerrar}>
+          <FormEmpresa onSave={(e) => { setData((s) => ({ ...s, empresa: [...s.empresa, e] })); cerrar(); setToast("Gasto de la empresa guardado"); ir("empresa"); }} />
+        </Sheet>
+      )}
+      {sheet === "sheets" && (
+        <Sheet title="Google Sheets" onClose={cerrar}>
+          <FormSheets cfg={cfg} onConectar={conectar} onDesconectar={desconectar} />
+        </Sheet>
+      )}
+      {sheet === "ajustes" && (
+        <Sheet title="Ajustes" onClose={cerrar}>
+          <Ajustes data={data} setData={setData} renombrar={renombrar} ir={setSheet} cfgOn={!!cfg} syncTxt={SYNC_UI[sync][0]} />
+        </Sheet>
+      )}
+      {sheet === "cuotas" && (
+        <Sheet title={`Cuotas de ${MESES_L[hoy.getMonth()]}`} onClose={cerrar}>
+          <FormCuotas pendientes={cuotasActivas(data.movs, hoy).filter((a) => !a.cargadaEsteMes)}
+            onLoad={(nuevos) => { setData((s) => ({ ...s, movs: [...s.movs, ...nuevos] })); cerrar(); setToast(`${nuevos.length} cuotas cargadas`); }} />
+        </Sheet>
+      )}
+      {sheet === "fijos" && (
+        <Sheet title={`Gastos fijos de ${MESES_L[hoy.getMonth()]}`} onClose={cerrar}>
+          <FormFijos fijos={data.fijos} movs={data.movs}
+            onTemplate={(fn) => setData((s) => ({ ...s, fijos: fn(s.fijos) }))}
+            onLoad={(nuevos, plantilla) => { setData((s) => ({ ...s, movs: [...s.movs, ...nuevos], fijos: plantilla })); cerrar(); setToast(`${nuevos.length} gastos fijos cargados`); }} />
+        </Sheet>
+      )}
+      {sheet === "deuda" && (
+        <Sheet title="Nueva deuda" onClose={cerrar}>
+          <FormDeuda onSave={(d) => { setData((s) => ({ ...s, deudas: [d, ...s.deudas] })); cerrar(); setToast("Deuda guardada"); ir("deudas"); }} />
+        </Sheet>
+      )}
+      {sheet === "meta" && (
+        <Sheet title="Nueva meta de ahorro" onClose={cerrar}>
+          <FormMeta onSave={(m) => { setData((s) => ({ ...s, metas: [...s.metas, m] })); cerrar(); setToast("Meta creada"); }} />
+        </Sheet>
+      )}
+      {(sheet === "cou-aporte" || sheet === "cou-devolucion") && (
+        <Sheet title="Movimiento con Cousteau" onClose={cerrar}>
+          <FormCousteau tipoInicial={sheet === "cou-aporte" ? "aporte" : "devolucion"} pendiente={pendCousteau}
+            onSave={(c) => { setData((s) => ({ ...s, cousteau: [...s.cousteau, c] })); cerrar(); setToast(c.tipo === "aporte" ? "Aporte guardado" : "Devolución guardada"); }} />
+        </Sheet>
+      )}
+    </div>
+  );
+}
+
+ReactDOM.createRoot(document.getElementById("root")).render(<App />);
+</script>
+
+</body>
+</html>
